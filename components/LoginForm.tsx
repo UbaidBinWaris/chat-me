@@ -84,13 +84,21 @@ export default function LoginForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        setErrors({ general: data.message || 'Login failed' });
+        // Handle 409 Conflict (already logged in)
+        if (response.status === 409) {
+          setErrors({ 
+            general: data.message + ' Session started: ' + new Date(data.session?.created_at).toLocaleString()
+          });
+        } else {
+          setErrors({ general: data.message || 'Login failed' });
+        }
         return;
       }
 
-      // Store tokens in localStorage (you might want to use httpOnly cookies instead)
+      // Store tokens and session in localStorage
       localStorage.setItem('accessToken', data.tokens.accessToken);
       localStorage.setItem('refreshToken', data.tokens.refreshToken);
+      localStorage.setItem('sessionToken', data.session.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
       // Redirect to dashboard

@@ -37,9 +37,29 @@ export default function DashboardPage() {
     }
   }, [router]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const sessionToken = localStorage.getItem('sessionToken');
+    const accessToken = localStorage.getItem('accessToken');
+    
+    // Call logout API to invalidate session
+    if (sessionToken && accessToken) {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ session_token: sessionToken }),
+        });
+      } catch (error) {
+        console.error('Logout API error:', error);
+      }
+    }
+    
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('sessionToken');
     localStorage.removeItem('user');
     router.push('/login');
   };
@@ -122,17 +142,25 @@ export default function DashboardPage() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">Quick Actions</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <button className="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left">
-                    <div className="text-sm font-medium text-gray-900">View Messages</div>
-                    <div className="text-xs text-gray-500 mt-1">Check your messages</div>
+                  <button
+                    onClick={() => router.push('/chat')}
+                    className="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left"
+                  >
+                    <div className="text-sm font-medium text-gray-900">Chat</div>
+                    <div className="text-xs text-gray-500 mt-1">Start messaging</div>
                   </button>
+                  {(user.role === 'admin' || user.role === 'management') && (
+                    <button
+                      onClick={() => router.push('/admin/groups')}
+                      className="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left"
+                    >
+                      <div className="text-sm font-medium text-gray-900">Manage Groups</div>
+                      <div className="text-xs text-gray-500 mt-1">Create and manage chat groups</div>
+                    </button>
+                  )}
                   <button className="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left">
                     <div className="text-sm font-medium text-gray-900">Settings</div>
                     <div className="text-xs text-gray-500 mt-1">Manage your account</div>
-                  </button>
-                  <button className="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 text-left">
-                    <div className="text-sm font-medium text-gray-900">Help</div>
-                    <div className="text-xs text-gray-500 mt-1">Get support</div>
                   </button>
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findUserByEmail, updateLastLogin } from '@/lib/user';
 import { verifyPassword, generateTokens } from '@/lib/auth';
+import { createSession, getActiveSession, generateSessionToken } from '@/lib/session';
 import {
   ValidationError,
   AuthenticationError,
@@ -73,6 +74,31 @@ export async function POST(request: NextRequest) {
     // Update last login timestamp
     await updateLastLogin(user.id);
 
+    // Check for existing active session - enforce single login
+    const existingSession = await getActiveSession(user.id);
+    if (existingSession) {
+      return NextResponse.json(
+        {
+          error: 'Already Logged In',
+          message: 'You are already logged in from another browser or device. Please logout from the other session first.',
+          session: {
+            created_at: existingSession.created_at,
+            last_activity: existingSession.last_activity,
+          }
+        },
+        { status: 409 } // 409 Conflict
+      );
+    }
+
+    // Get device and IP info
+    const userAgent = request.headers.get('user-agent') || undefined;
+    const ipAddress = request.headers.get('x-forwarded-for') || 
+                      request.headers.get('x-real-ip') || 
+                      undefined;
+
+    // Create new session (automatically invalidates any existing sessions)
+    const session = await createSession(user.id, userAgent, ipAddress);
+
     // Generate JWT tokens
     const tokens = generateTokens({
       userId: user.id,
@@ -95,6 +121,10 @@ export async function POST(request: NextRequest) {
         tokens: {
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
+        },
+        session: {
+          token: session.session_token,
+          expires_at: session.expires_at,
         },
       },
       { status: 200 }
