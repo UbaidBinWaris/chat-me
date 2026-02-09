@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Plus, MoreVertical, Send, Phone, Video, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
+// Import custom useSocket hook
+import { useSocket } from "@/hooks/useSocket"
 
 interface ChatLayoutProps {
     currentUser: any
@@ -20,8 +22,41 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
     const [newChatName, setNewChatName] = useState("")
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const socket = useSocket()
 
-    // Fetch Rooms (Poll every 5s)
+    // Socket: Listen for incoming messages
+    useEffect(() => {
+        if (!socket) return
+
+        socket.on("receive_message", (incomingMsg: any) => {
+            // If message belongs to current room, add it
+            if (incomingMsg.roomId === selectedRoom) {
+                setMessages(prev => {
+                    // Prevent duplicates if we already added it enthusiastically (optimistic UI)
+                    if (prev.some(m => m.id === incomingMsg.id)) return prev
+                    return [...prev, incomingMsg]
+                })
+            }
+
+            // Update room list preview
+            setRooms(prev => prev.map(r =>
+                r.id === incomingMsg.roomId
+                    ? {
+                        ...r,
+                        lastMessage: incomingMsg.content,
+                        time: incomingMsg.createdAt
+                    }
+                    : r
+            ))
+        })
+
+        return () => {
+            socket.off("receive_message")
+        }
+    }, [socket, selectedRoom])
+
+
+    // Fetch Rooms (Initial Load Only)
     useEffect(() => {
         const fetchRooms = async () => {
             try {
@@ -32,13 +67,10 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                 }
             } catch (e) { console.error(e) }
         }
-
         fetchRooms()
-        const interval = setInterval(fetchRooms, 5000)
-        return () => clearInterval(interval)
-    }, [])
+    }, []) // No interval!
 
-    // Fetch Messages when room selected (Poll every 2s)
+    // Fetch Messages & Join Room
     useEffect(() => {
         if (!selectedRoom) return
 
@@ -51,13 +83,16 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                 }
             } catch (e) { console.error(e) }
         }
-
         fetchMessages()
-        const interval = setInterval(fetchMessages, 2000)
-        return () => clearInterval(interval)
-    }, [selectedRoom])
 
-    // Scroll to bottom on new message
+        // Join room socket channel
+        if (socket) {
+            socket.emit("join_room", selectedRoom)
+        }
+
+    }, [selectedRoom, socket])
+
+    // Scroll to bottom
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages])
@@ -68,7 +103,7 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
         const tempMsg = {
             id: Date.now().toString(),
             content: message,
-            senderId: currentUser.id,
+            senderId: currentUser.id, // ID from DB
             sender: currentUser,
             createdAt: new Date().toISOString(),
             roomId: selectedRoom
@@ -78,6 +113,12 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
         setMessages(prev => [...prev, tempMsg])
         setMessage("")
 
+        // Emit to Socket Server
+        if (socket) {
+            socket.emit("send_message", tempMsg)
+        }
+
+        // Persist to DB (for history)
         try {
             await fetch('/api/messages', {
                 method: 'POST',
@@ -89,7 +130,7 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                 })
             })
         } catch (e) {
-            console.error("Failed to send", e)
+            console.error("Failed to save message", e)
         }
     }
 
@@ -112,6 +153,9 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                 setSelectedRoom(newRoom.id)
                 setIsNewChatOpen(false)
                 setNewChatName("")
+
+                // Join new room socket
+                if (socket) socket.emit("join_room", newRoom.id)
             }
         } catch (e) { console.error(e) }
     }
