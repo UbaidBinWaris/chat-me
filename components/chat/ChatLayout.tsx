@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search, Plus, MoreVertical, Phone, Video, Info } from "lucide-react"
+import { Phone, Video, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSocket } from "@/hooks/useSocket"
 import { ChatMessage } from "@/components/chat/ChatMessage"
 import { ChatInput } from "@/components/chat/ChatInput"
+import { Sidebar } from "@/components/chat/Sidebar"
 
 interface ChatLayoutProps {
     currentUser: any
@@ -93,25 +93,30 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages])
 
-    const handleSendMessage = async (content: string) => {
+    const handleSendMessage = async (content: string, type: "text" | "audio" | "image" | "file" = "text", fileUrl?: string) => {
         if (!selectedRoom) return
 
         const tempMsg = {
             id: Date.now().toString(),
             content: content,
-            senderId: currentUser.id,
+            senderId: currentUser.id, // ID from DB
             sender: currentUser,
             createdAt: new Date().toISOString(),
-            roomId: selectedRoom
+            roomId: selectedRoom,
+            type: type,
+            fileUrl: fileUrl
         }
 
+        // Optimistic update
         setMessages(prev => [...prev, tempMsg])
         setIsLoading(true)
 
+        // Emit to Socket Server
         if (socket) {
             socket.emit("send_message", tempMsg)
         }
 
+        // Persist to DB (for history)
         try {
             await fetch('/api/messages', {
                 method: 'POST',
@@ -119,7 +124,9 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                 body: JSON.stringify({
                     content: tempMsg.content,
                     roomId: selectedRoom,
-                    senderId: currentUser.id
+                    senderId: currentUser.id,
+                    type: type,
+                    fileUrl: fileUrl
                 })
             })
         } catch (e) {
@@ -159,81 +166,17 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
     return (
         <div className="flex h-screen bg-black text-white overflow-hidden">
             {/* Sidebar */}
-            <div className="w-80 border-r border-white/10 flex flex-col bg-gray-900/50 backdrop-blur-xl">
-                <div className="p-4 border-b border-white/10 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center font-bold text-lg text-white">
-                            {currentUser.username[0].toUpperCase()}
-                        </div>
-                        <div>
-                            <h2 className="font-semibold text-sm text-white">{currentUser.username}</h2>
-                            <span className="text-xs text-green-400 flex items-center gap-1">
-                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Online
-                            </span>
-                        </div>
-                    </div>
-                    <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
-                        <MoreVertical size={20} />
-                    </Button>
-                </div>
-
-                <div className="p-4 space-y-2">
-                    {!isNewChatOpen ? (
-                        <div className="relative">
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
-                            <Input placeholder="Search chats..." className="pl-9 bg-gray-800/50 border-none focus:ring-blue-500/50 text-white" />
-                        </div>
-                    ) : (
-                        <div className="flex gap-2">
-                            <Input
-                                placeholder="Room Name..."
-                                value={newChatName}
-                                onChange={e => setNewChatName(e.target.value)}
-                                className="bg-gray-800/50 text-white"
-                                autoFocus
-                            />
-                            <Button size="sm" onClick={handleCreateRoom} className="bg-blue-600">Create</Button>
-                            <Button size="sm" variant="ghost" onClick={() => setIsNewChatOpen(false)}>Cancel</Button>
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex-1 overflow-y-auto px-2 space-y-1">
-                    {rooms.map((room) => (
-                        <button
-                            key={room.id}
-                            onClick={() => setSelectedRoom(room.id)}
-                            className={cn(
-                                "w-full p-3 rounded-xl flex items-center gap-3 transition-all duration-200 hover:bg-white/5",
-                                selectedRoom === room.id ? "bg-white/10 shadow-lg border border-white/5" : "text-gray-400"
-                            )}
-                        >
-                            <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-lg font-medium text-gray-300">
-                                {room.name ? room.name[0].toUpperCase() : "?"}
-                            </div>
-                            <div className="flex-1 text-left">
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className={cn("font-medium", selectedRoom === room.id ? "text-white" : "text-gray-300")}>
-                                        {room.name || "Unnamed Room"}
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                        {room.time ? new Date(room.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <p className="text-xs text-gray-500 truncate max-w-[140px]">{room.lastMessage}</p>
-                                </div>
-                            </div>
-                        </button>
-                    ))}
-                </div>
-
-                <div className="p-4 border-t border-white/10">
-                    <Button className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setIsNewChatOpen(true)}>
-                        <Plus size={18} /> New Room
-                    </Button>
-                </div>
-            </div>
+            <Sidebar
+                currentUser={currentUser}
+                rooms={rooms}
+                selectedRoom={selectedRoom}
+                onSelectRoom={setSelectedRoom}
+                onCreateRoom={handleCreateRoom}
+                isNewChatOpen={isNewChatOpen}
+                setIsNewChatOpen={setIsNewChatOpen}
+                newChatName={newChatName}
+                setNewChatName={setNewChatName}
+            />
 
             {/* Chat Area */}
             {selectedRoom ? (

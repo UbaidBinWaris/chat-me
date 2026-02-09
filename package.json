@@ -11,8 +11,10 @@
   "dependencies": {
     "@prisma/client": "^5.15.1",
     "@types/express": "^5.0.6",
+    "@types/uuid": "^10.0.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "emoji-picker-react": "^4.18.0",
     "express": "^5.2.1",
     "framer-motion": "^11.1.0",
     "lucide-react": "^0.462.0",
@@ -25,6 +27,7 @@
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^2.4.0",
     "ts-node": "^10.9.2",
+    "uuid": "^13.0.0",
     "winston": "^3.19.0"
   },
   "devDependencies": {

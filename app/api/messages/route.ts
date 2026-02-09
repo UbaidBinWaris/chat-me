@@ -24,9 +24,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        const { content, roomId, senderId } = await req.json()
+        const { content, roomId, senderId, type, fileUrl } = await req.json()
 
-        if (!content || !roomId || !senderId) {
+        if ((!content && type === 'text') || !roomId || !senderId) {
             return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
         }
 
@@ -34,7 +34,9 @@ export async function POST(req: Request) {
             data: {
                 content,
                 roomId,
-                senderId
+                senderId,
+                type: type || 'text',
+                fileUrl
             },
             include: {
                 sender: true

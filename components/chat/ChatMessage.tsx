@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
-// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar" // We can add this later if we want actual avatars
+import { Play, Pause, FileIcon, Download } from "lucide-react"
 
 interface Message {
     id: string
@@ -12,6 +12,8 @@ interface Message {
         username: string
     }
     createdAt: string
+    type?: string
+    fileUrl?: string | null // string | null to match Prisma's String?
 }
 
 interface ChatMessageProps {
@@ -20,6 +22,10 @@ interface ChatMessageProps {
 }
 
 export function ChatMessage({ message, isMe }: ChatMessageProps) {
+    const isAudio = message.type === "audio" && message.fileUrl
+    const isImage = message.type === "image" && message.fileUrl
+    const isFile = message.type === "file" && message.fileUrl
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -30,8 +36,8 @@ export function ChatMessage({ message, isMe }: ChatMessageProps) {
             <div className={cn(
                 "max-w-[75%] rounded-2xl p-4 shadow-md relative group transition-all duration-200",
                 isMe
-                    ? "bg-blue-600 text-white rounded-br-sm"
-                    : "bg-gray-800/80 backdrop-blur-sm text-gray-200 rounded-bl-sm border border-white/5"
+                    ? "bg-blue-600 text-white rounded-br-none"
+                    : "bg-gray-800/80 backdrop-blur-sm text-gray-200 rounded-bl-none border border-white/5"
             )}>
                 {/* Sender Name (only for others) */}
                 {!isMe && (
@@ -40,10 +46,52 @@ export function ChatMessage({ message, isMe }: ChatMessageProps) {
                     </p>
                 )}
 
-                {/* Message Content */}
-                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                    {message.content}
-                </p>
+                {/* Content */}
+                <div className="space-y-2">
+                    {isAudio && (
+                        <div className="flex items-center gap-2 min-w-[200px]">
+                            <audio controls src={message.fileUrl || ""} className="h-8 w-full accent-blue-500" />
+                        </div>
+                    )}
+                    
+                    {isImage && (
+                        <div className="max-w-[300px] overflow-hidden rounded-lg">
+                            <img 
+                                src={message.fileUrl || ""} 
+                                alt="Attached image" 
+                                className="w-full h-auto object-cover hover:scale-105 transition-transform duration-300"
+                            />
+                        </div>
+                    )}
+
+                    {isFile && (
+                        <a 
+                            href={message.fileUrl || "#"} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-3 p-2 bg-black/20 rounded-lg hover:bg-black/30 transition-colors group/file"
+                        >
+                            <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
+                                <FileIcon size={24} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate max-w-[150px]">{message.content}</p>
+                                <p className="text-xs opacity-70">Click to download</p>
+                            </div>
+                            <Download size={16} className="opacity-0 group-hover/file:opacity-100 transition-opacity" />
+                        </a>
+                    )}
+
+                    {/* Show text if it exists and is not just the filename (for files) OR if it is an image caption */}
+                    {(!isFile || (isFile && message.content !== message.fileUrl?.split('/').pop())) && message.content && !isAudio && (
+                        <p className={cn(
+                            "text-sm leading-relaxed whitespace-pre-wrap break-words",
+                             (isImage || isFile) && "mt-2 opacity-90"
+                        )}>
+                            {message.content}
+                        </p>
+                    )}
+                </div>
 
                 {/* Timestamp & Status */}
                 <div className={cn(

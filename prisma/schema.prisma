@@ -32,7 +32,9 @@ model Convertation {
 
 model Message {
   id        String   @id @default(uuid())
-  content   String
+  content   String?  // Content can be empty if it's just an attachment
+  fileUrl   String?
+  type      String   @default("text") // text, audio, image
   createdAt DateTime @default(now())
   
   senderId  String
