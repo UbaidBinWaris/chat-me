@@ -42,5 +42,8 @@ next-env.d.ts
 
 /lib/generated/prisma
 
+# logs
+/logs
+*.log
 
 public/uploads

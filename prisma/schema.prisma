@@ -13,9 +13,23 @@ model User {
   email            String    @unique
   password         String
   emailVerified    DateTime?
-  resetToken       String?   @unique
-  resetTokenExpiry DateTime?
   createdAt        DateTime  @default(now())
+  
+  // Email verification OTP
+  emailVerificationOtp       String?
+  emailVerificationOtpExpiry DateTime?
+  emailVerificationAttempts  Int       @default(0)
+  emailVerificationLastSent  DateTime?
+  
+  // Password reset OTP
+  passwordResetOtp           String?
+  passwordResetOtpExpiry     DateTime?
+  passwordResetAttempts      Int       @default(0)
+  passwordResetLastSent      DateTime?
+  
+  // Security tracking
+  lastLoginIp                String?
+  lastLoginAt                DateTime?
   
   messages     Message[]
   participants Participant[]

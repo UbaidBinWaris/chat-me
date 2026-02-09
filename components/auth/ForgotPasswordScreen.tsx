@@ -9,9 +9,10 @@ import { ArrowLeft, Mail } from "lucide-react"
 
 interface ForgotPasswordScreenProps {
     onBackToLogin: () => void
+    onOtpSent?: (email: string) => void
 }
 
-export function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordScreenProps) {
+export function ForgotPasswordScreen({ onBackToLogin, onOtpSent }: ForgotPasswordScreenProps) {
     const [email, setEmail] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [message, setMessage] = useState("")
@@ -26,7 +27,7 @@ export function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordScreenProp
         setMessage("")
 
         try {
-            const res = await fetch('/api/auth/forgot-password', {
+            const res = await fetch('/api/auth/send-reset-otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),
@@ -35,13 +36,16 @@ export function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordScreenProp
             const data = await res.json()
 
             if (res.ok) {
-                setMessage(data.message)
-                setEmail("")
+                setMessage(data.message || "Reset code sent to your email")
+                // Optionally navigate to OTP verification screen
+                if (onOtpSent) {
+                    setTimeout(() => onOtpSent(email), 1500)
+                }
             } else {
-                setError(data.error || "Failed to send reset email")
+                setError(data.error || "Failed to send reset code")
             }
         } catch (error) {
-            console.error("Failed to send reset email", error)
+            console.error("Failed to send reset code", error)
             setError("Something went wrong. Please try again.")
         } finally {
             setIsLoading(false)
@@ -61,7 +65,7 @@ export function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordScreenProp
                             Forgot Password?
                         </CardTitle>
                         <p className="text-gray-400 text-sm">
-                            Enter your email and we'll send you a reset link.
+                            Enter your email and we'll send you a 6-digit code.
                         </p>
                     </CardHeader>
                     <CardContent>
@@ -90,7 +94,7 @@ export function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordScreenProp
                                 className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg shadow-cyan-500/20"
                                 disabled={!email.trim() || isLoading}
                             >
-                                {isLoading ? "Sending..." : "Send Reset Link"}
+                                {isLoading ? "Sending..." : "Send Reset Code"}
                             </Button>
                         </form>
                     </CardContent>
