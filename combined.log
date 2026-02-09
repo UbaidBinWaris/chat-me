@@ -78,3 +78,31 @@
 {"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T20:57:40.222Z"}
 {"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T20:57:40.223Z"}
 {"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T20:57:40.262Z"}
+{"level":"info","message":"Client disconnected: KxPO7L3QpfrwGbLGAAAJ","timestamp":"2026-02-09T21:05:54.176Z"}
+{"level":"info","message":"> Ready on http://localhost:3000","timestamp":"2026-02-09T21:15:12.251Z"}
+{"level":"info","message":"Client connected: ZhfRt6JXxQdWXGSiAAAC","timestamp":"2026-02-09T21:19:25.449Z"}
+{"level":"info","message":"Client disconnected: ZhfRt6JXxQdWXGSiAAAC","timestamp":"2026-02-09T21:19:40.445Z"}
+{"level":"info","message":"Client connected: kxTvi5H8UXQbxkfxAAAF","timestamp":"2026-02-09T21:19:49.152Z"}
+{"level":"info","message":"Client disconnected: kxTvi5H8UXQbxkfxAAAF","timestamp":"2026-02-09T21:19:52.650Z"}
+{"level":"info","message":"> Ready on http://localhost:3000","timestamp":"2026-02-09T21:49:55.095Z"}
+{"level":"info","message":"Client connected: CqumOeaKbjo3Vir-AAAC","timestamp":"2026-02-09T21:50:55.422Z"}
+{"level":"info","message":"Socket CqumOeaKbjo3Vir-AAAC joined room ed39066e-3678-4175-b56f-e2222c7df803","timestamp":"2026-02-09T21:51:11.147Z"}
+{"level":"info","message":"Socket CqumOeaKbjo3Vir-AAAC joined room ed39066e-3678-4175-b56f-e2222c7df803","timestamp":"2026-02-09T21:51:11.178Z"}
+{"level":"info","message":"Message received in room ed39066e-3678-4175-b56f-e2222c7df803 from bca32603-ad96-4f50-865b-55a500d5a2ac","timestamp":"2026-02-09T21:51:15.473Z"}
+{"level":"info","message":"Message received in room ed39066e-3678-4175-b56f-e2222c7df803 from bca32603-ad96-4f50-865b-55a500d5a2ac","timestamp":"2026-02-09T21:51:18.616Z"}
+{"level":"info","message":"Client connected: -RRUqvfhpE9mDL1mAAAF","timestamp":"2026-02-09T21:51:44.939Z"}
+{"level":"info","message":"Socket -RRUqvfhpE9mDL1mAAAF joined room ed39066e-3678-4175-b56f-e2222c7df803","timestamp":"2026-02-09T21:51:46.643Z"}
+{"level":"info","message":"Message received in room ed39066e-3678-4175-b56f-e2222c7df803 from 30990f34-a0cc-45a3-a33b-047637805a17","timestamp":"2026-02-09T21:51:49.150Z"}
+{"level":"info","message":"Message received in room ed39066e-3678-4175-b56f-e2222c7df803 from 30990f34-a0cc-45a3-a33b-047637805a17","timestamp":"2026-02-09T21:51:56.046Z"}
+{"level":"info","message":"Message received in room ed39066e-3678-4175-b56f-e2222c7df803 from 30990f34-a0cc-45a3-a33b-047637805a17","timestamp":"2026-02-09T21:52:02.224Z"}
+{"level":"info","message":"Message received in room ed39066e-3678-4175-b56f-e2222c7df803 from 30990f34-a0cc-45a3-a33b-047637805a17","timestamp":"2026-02-09T21:52:05.110Z"}
+{"level":"info","message":"Client disconnected: -RRUqvfhpE9mDL1mAAAF","timestamp":"2026-02-09T21:52:12.112Z"}
+{"level":"info","message":"Client connected: vKlxMgN1nE8U1KEDAAAI","timestamp":"2026-02-09T21:52:16.012Z"}
+{"level":"info","message":"> Ready on http://localhost:3000","timestamp":"2026-02-09T21:55:02.398Z"}
+{"level":"info","message":"Client connected: DXa4yiO_tayU8CKUAAAB","timestamp":"2026-02-09T21:55:02.496Z"}
+{"level":"info","message":"Client disconnected: DXa4yiO_tayU8CKUAAAB","timestamp":"2026-02-09T21:55:04.353Z"}
+{"level":"info","message":"Client connected: rWqzsc8n8u98OKDUAAAD","timestamp":"2026-02-09T21:55:04.629Z"}
+{"level":"info","message":"Client disconnected: rWqzsc8n8u98OKDUAAAD","timestamp":"2026-02-09T21:55:09.046Z"}
+{"level":"info","message":"Client connected: 80XkP1a2DjVo_xbrAAAG","timestamp":"2026-02-09T21:55:09.550Z"}
+{"level":"info","message":"Client disconnected: 80XkP1a2DjVo_xbrAAAG","timestamp":"2026-02-09T21:55:12.705Z"}
+{"level":"info","message":"Client connected: pJvPcfiwvj8PGkvjAAAJ","timestamp":"2026-02-09T21:55:18.033Z"}

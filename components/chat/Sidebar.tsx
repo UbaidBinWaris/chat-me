@@ -1,8 +1,9 @@
 "use client"
 
+import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, MoreVertical } from "lucide-react"
+import { Search, Plus, MoreVertical, LogOut } from "lucide-react"
 import { ChatListItem } from "@/components/chat/ChatListItem"
 
 interface SidebarProps {
@@ -43,8 +44,14 @@ export function Sidebar({
                         </span>
                     </div>
                 </div>
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
-                    <MoreVertical size={20} />
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    title="Logout"
+                >
+                    <LogOut size={20} />
                 </Button>
             </div>
 
