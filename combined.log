@@ -1,0 +1,41 @@
+{"level":"info","message":"> Ready on http://localhost:3000","timestamp":"2026-02-09T18:52:28.249Z"}
+{"level":"info","message":"Client connected: WdU7Xz8VlFeZDu8MAAAB","timestamp":"2026-02-09T18:52:28.480Z"}
+{"level":"info","message":"Client connected: fw6iMSBnW1Tp2HUxAAAD","timestamp":"2026-02-09T18:52:33.004Z"}
+{"level":"info","message":"> Ready on http://localhost:3000","timestamp":"2026-02-09T18:53:35.691Z"}
+{"level":"info","message":"Client connected: VOV2S8yN3P1aGz8zAAAC","timestamp":"2026-02-09T18:53:35.845Z"}
+{"level":"info","message":"Client connected: MtRaF2qXiNJoA7PmAAAD","timestamp":"2026-02-09T18:53:35.899Z"}
+{"level":"info","message":"> Ready on http://localhost:3000","timestamp":"2026-02-09T18:55:39.190Z"}
+{"level":"info","message":"Client connected: q7DSL00a1iKzA-2RAAAB","timestamp":"2026-02-09T18:55:39.234Z"}
+{"level":"info","message":"Client connected: JHAXTUorIpaAH9o3AAAD","timestamp":"2026-02-09T18:55:39.388Z"}
+{"level":"info","message":"Client disconnected: q7DSL00a1iKzA-2RAAAB","timestamp":"2026-02-09T18:55:44.416Z"}
+{"level":"info","message":"Client connected: Kz8dehU-fGbechHrAAAF","timestamp":"2026-02-09T18:55:45.484Z"}
+{"level":"info","message":"Client disconnected: JHAXTUorIpaAH9o3AAAD","timestamp":"2026-02-09T18:55:47.432Z"}
+{"level":"info","message":"Client disconnected: Kz8dehU-fGbechHrAAAF","timestamp":"2026-02-09T18:55:47.727Z"}
+{"level":"info","message":"Client connected: iJEGV_4w8bdllaW2AAAH","timestamp":"2026-02-09T18:55:47.756Z"}
+{"level":"info","message":"Client connected: ti4-OllOg_cyiyY7AAAK","timestamp":"2026-02-09T18:55:54.444Z"}
+{"level":"info","message":"Client connected: YsyA5FhwTM3mluXzAAAN","timestamp":"2026-02-09T18:55:56.094Z"}
+{"level":"info","message":"Socket ti4-OllOg_cyiyY7AAAK joined room ba691c49-9621-4149-a20b-20233fb59643","timestamp":"2026-02-09T18:55:59.436Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 123fbabf-6086-4e9c-95ab-2527b73e2fa0","timestamp":"2026-02-09T18:56:02.364Z"}
+{"level":"info","message":"Socket YsyA5FhwTM3mluXzAAAN joined room ba691c49-9621-4149-a20b-20233fb59643","timestamp":"2026-02-09T18:56:03.856Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:05.890Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:06.685Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:07.343Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:07.935Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:08.545Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:09.173Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:09.688Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:10.310Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:11.024Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:11.593Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:12.185Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:13.783Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:14.209Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:14.664Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:15.180Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:15.635Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:16.144Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:16.654Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:17.071Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:17.523Z"}
+{"level":"info","message":"Message received in room ba691c49-9621-4149-a20b-20233fb59643 from 62e28d14-493b-4a1c-9202-3c6b6f2dfc0f","timestamp":"2026-02-09T18:56:17.984Z"}
+{"level":"info","message":"Client disconnected: iJEGV_4w8bdllaW2AAAH","timestamp":"2026-02-09T18:56:32.729Z"}
