@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, MoreVertical, Send, Phone, Video, Info } from "lucide-react"
+import { Search, Plus, MoreVertical, Phone, Video, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
-// Import custom useSocket hook
 import { useSocket } from "@/hooks/useSocket"
+import { ChatMessage } from "@/components/chat/ChatMessage"
+import { ChatInput } from "@/components/chat/ChatInput"
 
 interface ChatLayoutProps {
     currentUser: any
@@ -15,11 +15,11 @@ interface ChatLayoutProps {
 
 export function ChatLayout({ currentUser }: ChatLayoutProps) {
     const [selectedRoom, setSelectedRoom] = useState<string | null>(null)
-    const [message, setMessage] = useState("")
     const [rooms, setRooms] = useState<any[]>([])
     const [messages, setMessages] = useState<any[]>([])
     const [isNewChatOpen, setIsNewChatOpen] = useState(false)
     const [newChatName, setNewChatName] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const socket = useSocket()
@@ -29,16 +29,13 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
         if (!socket) return
 
         socket.on("receive_message", (incomingMsg: any) => {
-            // If message belongs to current room, add it
             if (incomingMsg.roomId === selectedRoom) {
                 setMessages(prev => {
-                    // Prevent duplicates if we already added it enthusiastically (optimistic UI)
                     if (prev.some(m => m.id === incomingMsg.id)) return prev
                     return [...prev, incomingMsg]
                 })
             }
 
-            // Update room list preview
             setRooms(prev => prev.map(r =>
                 r.id === incomingMsg.roomId
                     ? {
@@ -68,7 +65,7 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
             } catch (e) { console.error(e) }
         }
         fetchRooms()
-    }, []) // No interval!
+    }, [])
 
     // Fetch Messages & Join Room
     useEffect(() => {
@@ -85,7 +82,6 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
         }
         fetchMessages()
 
-        // Join room socket channel
         if (socket) {
             socket.emit("join_room", selectedRoom)
         }
@@ -97,28 +93,25 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages])
 
-    const handleSendMessage = async () => {
-        if (!message.trim() || !selectedRoom) return
+    const handleSendMessage = async (content: string) => {
+        if (!selectedRoom) return
 
         const tempMsg = {
             id: Date.now().toString(),
-            content: message,
-            senderId: currentUser.id, // ID from DB
+            content: content,
+            senderId: currentUser.id,
             sender: currentUser,
             createdAt: new Date().toISOString(),
             roomId: selectedRoom
         }
 
-        // Optimistic update
         setMessages(prev => [...prev, tempMsg])
-        setMessage("")
+        setIsLoading(true)
 
-        // Emit to Socket Server
         if (socket) {
             socket.emit("send_message", tempMsg)
         }
 
-        // Persist to DB (for history)
         try {
             await fetch('/api/messages', {
                 method: 'POST',
@@ -131,6 +124,8 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
             })
         } catch (e) {
             console.error("Failed to save message", e)
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -154,7 +149,6 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                 setIsNewChatOpen(false)
                 setNewChatName("")
 
-                // Join new room socket
                 if (socket) socket.emit("join_room", newRoom.id)
             }
         } catch (e) { console.error(e) }
@@ -263,55 +257,19 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                     </div>
 
                     {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                        {messages.map((msg) => {
-                            const isMe = msg.senderId === currentUser.id;
-                            return (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    key={msg.id}
-                                    className={cn("flex", isMe ? "justify-end" : "justify-start")}
-                                >
-                                    <div className={cn(
-                                        "max-w-[70%] rounded-2xl p-4 shadow-sm relative group",
-                                        isMe
-                                            ? "bg-blue-600 text-white rounded-br-none"
-                                            : "bg-gray-800 text-gray-200 rounded-bl-none"
-                                    )}>
-                                        {!isMe && <p className="text-xs text-blue-400 mb-1 font-medium">{msg.sender.username}</p>}
-                                        <p className="text-sm leading-relaxed">{msg.content}</p>
-                                        <span className={cn(
-                                            "text-[10px] absolute bottom-1",
-                                            isMe ? "right-2 text-blue-200/50" : "left-2 text-gray-500",
-                                            "opacity-0 group-hover:opacity-100 transition-opacity"
-                                        )}>
-                                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
-                                    </div>
-                                </motion.div>
-                            )
-                        })}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                        {messages.map((msg) => (
+                            <ChatMessage
+                                key={msg.id}
+                                message={msg}
+                                isMe={msg.senderId === currentUser.id}
+                            />
+                        ))}
                         <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Message Input */}
-                    <div className="p-4 bg-gray-900/50 backdrop-blur-md border-t border-white/10">
-                        <form
-                            onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-                            className="flex gap-2 max-w-4xl mx-auto"
-                        >
-                            <Input
-                                placeholder="Type a message..."
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                className="bg-gray-800/50 text-white border-none focus:ring-blue-500/50 h-12 rounded-full px-6"
-                            />
-                            <Button size="icon" type="submit" className="h-12 w-12 rounded-full bg-blue-600 hover:bg-blue-700 shrink-0 text-white">
-                                <Send size={20} />
-                            </Button>
-                        </form>
-                    </div>
+                    {/* Chat Input */}
+                    <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
                 </div>
             ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-gray-500 space-y-4">
