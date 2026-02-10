@@ -8,6 +8,7 @@ import { useSocket } from "@/hooks/useSocket"
 import { ChatMessage } from "@/components/chat/ChatMessage"
 import { ChatInput } from "@/components/chat/ChatInput"
 import { Sidebar } from "@/components/chat/Sidebar"
+import { MessageInfoModal } from "@/components/chat/MessageInfoModal"
 
 import { UserInfoPanel } from "@/components/chat/UserInfoPanel"
 
@@ -25,6 +26,10 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
     const [isUserListOpen, setIsUserListOpen] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isInfoOpen, setIsInfoOpen] = useState(false)
+
+    // Message Info Modal
+    const [selectedMessage, setSelectedMessage] = useState<any>(null)
+    const [isMessageInfoOpen, setIsMessageInfoOpen] = useState(false)
 
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -46,6 +51,11 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
             setRooms(prev => prev.map(r =>
                 r.id === roomId ? { ...r, unreadCount: 0 } : r
             ))
+
+            // Emit read status to socket
+            if (socket) {
+                socket.emit("mark_read", { roomId, userId: currentUser.id })
+            }
         } catch (e) {
             console.error("Failed to mark room as read", e)
         }
@@ -82,6 +92,13 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
             if (incomingMsg.senderId !== currentUser.id) {
                 const audio = new Audio('/notification.mp3');
                 audio.play().catch(e => console.error("Audio play failed:", e));
+
+                // Emit Delivered status if we received it
+                socket.emit("mark_delivered", {
+                    messageIds: [incomingMsg.id],
+                    senderId: incomingMsg.senderId,
+                    roomId: incomingMsg.roomId
+                });
             }
 
             if (incomingMsg.roomId === selectedRoom) {
@@ -111,10 +128,49 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
             ))
         })
 
+        // Listen for status updates (Sent -> Delivered -> Read)
+        socket.on("message_status_update", (data: { messageIds?: string[], roomId: string, status: string, deliveredAt?: string, readAt?: string, readBy?: string }) => {
+            // Update messages in the current view
+            if (selectedRoom === data.roomId) {
+                setMessages(prev => prev.map(msg => {
+                    // Update if it's one of the specific messages OR if it's a "read all" event (no messageIds)
+                    const shouldUpdate = data.messageIds
+                        ? data.messageIds.includes(msg.id)
+                        : (msg.senderId === currentUser.id && msg.status !== 'read'); // Simple assumption: update all my unread messages
+
+                    if (shouldUpdate) {
+                        return {
+                            ...msg,
+                            status: data.status,
+                            deliveredAt: data.deliveredAt || msg.deliveredAt,
+                            readAt: data.readAt || msg.readAt
+                        }
+                    }
+                    return msg
+                }))
+            }
+        })
+
+        socket.on("new_chat", (newRoom: any) => {
+            setRooms(prev => {
+                if (prev.some(r => r.id === newRoom.id)) return prev
+                return [newRoom, ...prev]
+            })
+
+            // Join the new room
+            socket.emit("join_room", newRoom.id)
+
+            // Play sound
+            const audio = new Audio('/notification.mp3')
+            audio.play().catch(e => console.error("Audio play failed:", e))
+        })
+
         return () => {
             socket.off("receive_message")
             socket.off("user_status")
             socket.off("online_users")
+            socket.off("message_status_update")
+            socket.off("new_chat")
         }
     }, [socket, selectedRoom, currentUser.id])
 
@@ -127,11 +183,18 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                 if (res.ok) {
                     const data = await res.json()
                     setRooms(data)
+
+                    // Join all rooms to receive real-time updates for them
+                    if (socket && data.length > 0) {
+                        data.forEach((room: any) => {
+                            socket.emit("join_room", room.id)
+                        })
+                    }
                 }
             } catch (e) { console.error(e) }
         }
         fetchRooms()
-    }, [])
+    }, [socket])
 
     // Fetch Messages & Join Room
     useEffect(() => {
@@ -350,6 +413,10 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                                 key={msg.id}
                                 message={msg}
                                 isMe={msg.senderId === currentUser.id}
+                                onShowInfo={(m) => {
+                                    setSelectedMessage(m)
+                                    setIsMessageInfoOpen(true)
+                                }}
                             />
                         ))}
                         <div ref={messagesEndRef} />
@@ -363,6 +430,13 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                         isOpen={isInfoOpen && !currentRoom?.isGroup}
                         onClose={() => setIsInfoOpen(false)}
                         user={currentRoom?.otherUser}
+                    />
+
+                    {/* Message Info Modal */}
+                    <MessageInfoModal
+                        isOpen={isMessageInfoOpen}
+                        onClose={() => setIsMessageInfoOpen(false)}
+                        message={selectedMessage}
                     />
                 </div>
             ) : (

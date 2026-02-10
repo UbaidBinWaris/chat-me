@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import { useSocket } from "@/hooks/useSocket"
+import { toast } from "sonner"
 
 interface NotificationCenterProps {
     currentUserId: string
@@ -67,10 +68,25 @@ export function NotificationCenter({ currentUserId, side = "bottom" }: Notificat
             // Play sound
             const audio = new Audio('/notification.mp3')
             audio.play().catch(e => console.error("Audio play failed:", e))
+
+            toast.info(`New friend request from ${newRequest.otherUser.username}`)
+        })
+
+        socket.on("friend_request_accepted", (data: any) => {
+            toast.success(`Friend request accepted by ${data.otherUser.username}`)
+            // Play sound
+            const audio = new Audio('/notification.mp3')
+            audio.play().catch(e => console.error("Audio play failed:", e))
+        })
+
+        socket.on("friend_request_declined", (data: any) => {
+            toast.error(`Friend request declined by ${data.otherUser.username}`)
         })
 
         return () => {
             socket.off("new_friend_request")
+            socket.off("friend_request_accepted")
+            socket.off("friend_request_declined")
         }
     }, [socket, currentUserId])
 

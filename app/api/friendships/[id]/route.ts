@@ -56,18 +56,85 @@ export async function PATCH(
                     select: {
                         id: true,
                         username: true,
-                        email: true
+                        email: true,
+                        image: true // Include image for avatar
                     }
                 },
                 addressee: {
                     select: {
                         id: true,
                         username: true,
-                        email: true
+                        email: true,
+                        image: true // Include image for avatar
                     }
                 }
             }
         })
+
+        if (global.io) {
+            // Notify the requester about the status change
+            global.io.to(`notification:${updatedFriendship.requesterId}`).emit(
+                status === 'accepted' ? 'friend_request_accepted' : 'friend_request_declined',
+                {
+                    id: updatedFriendship.id,
+                    status: updatedFriendship.status,
+                    otherUser: updatedFriendship.addressee
+                }
+            )
+
+            // If accepted, find or create DM room and notify BOTH users
+            if (status === 'accepted') {
+                // Find or create DM room
+                let room = await prisma.room.findFirst({
+                    where: {
+                        isGroup: false,
+                        AND: [
+                            { participants: { some: { userId: updatedFriendship.requesterId } } },
+                            { participants: { some: { userId: updatedFriendship.addresseeId } } }
+                        ]
+                    }
+                })
+
+                if (!room) {
+                    room = await prisma.room.create({
+                        data: {
+                            isGroup: false,
+                            participants: {
+                                create: [
+                                    { userId: updatedFriendship.requesterId },
+                                    { userId: updatedFriendship.addresseeId }
+                                ]
+                            }
+                        }
+                    })
+                }
+
+                // Helper to format room for specific user
+                const getFormattedRoom = (room: any, meId: string, otherUser: any) => ({
+                    id: room.id,
+                    name: otherUser.username,
+                    isGroup: false,
+                    image: otherUser.image, // Include image if available
+                    participants: [{ id: meId }, { id: otherUser.id }], // Simplified participants
+                    otherUser: otherUser,
+                    lastMessage: "New connection",
+                    time: new Date().toISOString(),
+                    unreadCount: 0
+                })
+
+                // Notify Requester
+                global.io.to(`notification:${updatedFriendship.requesterId}`).emit(
+                    'new_chat',
+                    getFormattedRoom(room, updatedFriendship.requesterId, updatedFriendship.addressee)
+                )
+
+                // Notify Addressee (Current User)
+                global.io.to(`notification:${updatedFriendship.addresseeId}`).emit(
+                    'new_chat',
+                    getFormattedRoom(room, updatedFriendship.addresseeId, updatedFriendship.requester)
+                )
+            }
+        }
 
         return NextResponse.json(updatedFriendship)
     } catch (error) {

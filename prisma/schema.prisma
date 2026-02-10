@@ -79,6 +79,11 @@ model Message {
   type      String   @default("text") // text, audio, image
   createdAt DateTime @default(now())
 
+  // Status
+  status      String    @default("sent") // sent, delivered, read
+  deliveredAt DateTime?
+  readAt      DateTime?
+
   senderId String
   sender   User   @relation(fields: [senderId], references: [id])
 
