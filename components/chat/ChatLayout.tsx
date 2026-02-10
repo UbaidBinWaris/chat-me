@@ -542,7 +542,12 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                     </div>
 
                     {/* Chat Input */}
-                    <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+                    <ChatInput
+                        onSendMessage={handleSendMessage}
+                        isLoading={isLoading}
+                        isGroupChat={currentRoom?.isGroup || false}
+                        participants={currentRoomDetails?.participants?.map((p: any) => p.user) || []}
+                    />
 
                     {/* User Info Panel */}
                     <UserInfoPanel

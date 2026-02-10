@@ -1,18 +1,28 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Send, Paperclip, Smile, Mic, Square, FileIcon, X } from "lucide-react"
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react"
+import { MentionAutocomplete } from "@/components/chat/MentionAutocomplete"
+import { extractMentions } from "@/lib/utils/mentions"
 
-interface ChatInputProps {
-
-    onSendMessage: (content: string, type?: "text" | "audio" | "image" | "file", fileUrl?: string) => void
-    isLoading?: boolean
+interface User {
+    id: string
+    username: string
+    image?: string | null
+    bio?: string | null
 }
 
-export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
+interface ChatInputProps {
+    onSendMessage: (content: string, type?: "text" | "audio" | "image" | "file", fileUrl?: string) => void
+    isLoading?: boolean
+    isGroupChat?: boolean
+    participants?: User[]
+}
+
+export function ChatInput({ onSendMessage, isLoading, isGroupChat = false, participants = [] }: ChatInputProps) {
     const [message, setMessage] = useState("")
     const [isRecording, setIsRecording] = useState(false)
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -23,11 +33,59 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
     const inputRef = useRef<HTMLInputElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    // Mention autocomplete state
+    const [showMentionAutocomplete, setShowMentionAutocomplete] = useState(false)
+    const [mentionQuery, setMentionQuery] = useState("")
+    const [mentionStartPos, setMentionStartPos] = useState(0)
+    const [cursorPosition, setCursorPosition] = useState({ top: 0, left: 0 })
+
+    // Detect @ mentions and show autocomplete
+    useEffect(() => {
+        if (!isGroupChat || !message) {
+            setShowMentionAutocomplete(false)
+            return
+        }
+
+        const cursorPos = inputRef.current?.selectionStart || 0
+        const textBeforeCursor = message.slice(0, cursorPos)
+        const lastAtIndex = textBeforeCursor.lastIndexOf('@')
+
+        if (lastAtIndex !== -1) {
+            const textAfterAt = textBeforeCursor.slice(lastAtIndex + 1)
+            // Check if there's a space after @ (if so, close autocomplete)
+            if (textAfterAt.includes(' ')) {
+                setShowMentionAutocomplete(false)
+            } else {
+                setMentionQuery(textAfterAt)
+                setMentionStartPos(lastAtIndex)
+                setShowMentionAutocomplete(true)
+            }
+        } else {
+            setShowMentionAutocomplete(false)
+        }
+    }, [message, isGroupChat])
+
+    const handleMentionSelect = (username: string) => {
+        const before = message.slice(0, mentionStartPos)
+        const after = message.slice(inputRef.current?.selectionStart || message.length)
+        const newMessage = `${before}@${username} ${after}`
+        setMessage(newMessage)
+        setShowMentionAutocomplete(false)
+
+        // Set cursor position after the mention
+        setTimeout(() => {
+            const newCursorPos = mentionStartPos + username.length + 2
+            inputRef.current?.setSelectionRange(newCursorPos, newCursorPos)
+            inputRef.current?.focus()
+        }, 0)
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if ((!message.trim() && selectedFiles.length === 0) || isLoading || isUploading) return
 
         setIsUploading(true)
+        setShowMentionAutocomplete(false)
 
         if (message.trim()) {
             if (selectedFiles.length === 1) {
@@ -198,8 +256,19 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
 
             <form
                 onSubmit={handleSubmit}
-                className="flex items-center gap-2 max-w-4xl mx-auto"
+                className="flex items-center gap-2 max-w-4xl mx-auto relative"
             >
+
+                {/* Mention Autocomplete */}
+                {showMentionAutocomplete && isGroupChat && (
+                    <MentionAutocomplete
+                        participants={participants}
+                        query={mentionQuery}
+                        onSelect={handleMentionSelect}
+                        onClose={() => setShowMentionAutocomplete(false)}
+                        position={{ top: 60, left: 16 }}
+                    />
+                )}
 
                 {/* Emoji Picker */}
                 {showEmojiPicker && (

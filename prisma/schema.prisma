@@ -93,6 +93,9 @@ model Message {
   deliveredAt DateTime?
   readAt      DateTime?
 
+  // Mentions - array of user IDs mentioned in this message
+  mentions String[] @default([])
+
   senderId String
   sender   User   @relation(fields: [senderId], references: [id])
 

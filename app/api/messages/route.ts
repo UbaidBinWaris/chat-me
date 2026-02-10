@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { extractMentions, validateMentions } from '@/lib/utils/mentions'
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
@@ -30,13 +31,21 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
         }
 
+        // Extract and validate mentions from message content
+        let mentions: string[] = []
+        if (content && type === 'text') {
+            const mentionedUsernames = extractMentions(content)
+            mentions = await validateMentions(mentionedUsernames, roomId)
+        }
+
         const message = await prisma.message.create({
             data: {
                 content,
                 roomId,
                 senderId,
                 type: type || 'text',
-                fileUrl
+                fileUrl,
+                mentions
             },
             include: {
                 sender: true

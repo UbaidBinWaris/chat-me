@@ -7,6 +7,7 @@ import { Play, Pause, FileIcon, Download, Check, CheckCheck } from "lucide-react
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { format } from "date-fns"
+import { parseMentionsForDisplay } from "@/lib/utils/mentions"
 
 interface Message {
     id: string
@@ -97,12 +98,24 @@ export function ChatMessage({ message, isMe, onShowInfo, onDelete }: ChatMessage
 
                                 {/* Show text if it exists and is not just the filename (for files) OR if it is an image caption */}
                                 {(!isFile || (isFile && message.content !== message.fileUrl?.split('/').pop())) && message.content && !isAudio && (
-                                    <p className={cn(
+                                    <div className={cn(
                                         "text-sm leading-relaxed whitespace-pre-wrap break-words",
                                         (isImage || isFile) && "mt-2 opacity-90"
                                     )}>
-                                        {message.content}
-                                    </p>
+                                        {parseMentionsForDisplay(message.content).map((part, index) => {
+                                            if (part.type === 'mention') {
+                                                return (
+                                                    <span
+                                                        key={index}
+                                                        className="bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded font-semibold"
+                                                    >
+                                                        @{part.content}
+                                                    </span>
+                                                )
+                                            }
+                                            return <span key={index}>{part.content}</span>
+                                        })}
+                                    </div>
                                 )}
                             </div>
 
