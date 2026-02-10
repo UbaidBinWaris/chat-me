@@ -146,6 +146,20 @@ export async function POST(req: Request) {
             }
         })
 
+        // Format for socket payload (same as in GET /api/friendships)
+        const socketPayload = {
+            id: friendship.id,
+            status: friendship.status,
+            createdAt: friendship.createdAt,
+            isRequester: false, // For the receiver, they are not the requester
+            otherUser: friendship.requester
+        }
+
+        // Emit socket event
+        if (global.io) {
+            global.io.to(`notification:${addresseeId}`).emit('new_friend_request', socketPayload)
+        }
+
         return NextResponse.json(friendship, { status: 201 })
     } catch (error) {
         console.error('Error creating friendship:', error)

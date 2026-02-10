@@ -45,7 +45,7 @@ export function ChatListItem({ room, selected, onClick }: ChatListItemProps) {
                         )}
                     </h3>
                     <span className="text-xs text-gray-500 flex-shrink-0">
-                        {formatDistanceToNow(new Date(room.time), { addSuffix: true })}
+                        {room.time ? formatDistanceToNow(new Date(room.time), { addSuffix: true }) : ""}
                     </span>
                 </div>
                 <p className="text-sm text-gray-400 truncate">{room.lastMessage}</p>

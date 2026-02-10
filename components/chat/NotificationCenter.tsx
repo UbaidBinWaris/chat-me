@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
+import { useSocket } from "@/hooks/useSocket"
 
 interface NotificationCenterProps {
     currentUserId: string
@@ -30,11 +31,12 @@ export function NotificationCenter({ currentUserId, side = "bottom" }: Notificat
     const [isLoading, setIsLoading] = useState(false)
     const [processingId, setProcessingId] = useState<string | null>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
+    const socket = useSocket()
 
     useEffect(() => {
         fetchRequests()
 
-        // Poll for new requests
+        // Poll for new requests (fallback)
         const interval = setInterval(fetchRequests, 30000)
 
         // Close on click outside
@@ -51,6 +53,26 @@ export function NotificationCenter({ currentUserId, side = "bottom" }: Notificat
             document.removeEventListener("mousedown", handleClickOutside)
         }
     }, [])
+
+    useEffect(() => {
+        if (!socket) return
+
+        // Join notification room
+        socket.emit("join_room", `notification:${currentUserId}`)
+
+        // Listen for new requests
+        socket.on("new_friend_request", (newRequest: FriendRequest) => {
+            setRequests(prev => [newRequest, ...prev])
+
+            // Play sound
+            const audio = new Audio('/notification.mp3')
+            audio.play().catch(e => console.error("Audio play failed:", e))
+        })
+
+        return () => {
+            socket.off("new_friend_request")
+        }
+    }, [socket, currentUserId])
 
     const fetchRequests = async () => {
         try {

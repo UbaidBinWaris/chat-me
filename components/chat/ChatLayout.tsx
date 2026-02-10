@@ -32,6 +32,12 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
         if (!socket) return
 
         socket.on("receive_message", (incomingMsg: any) => {
+            // Play sound if message is not from current user
+            if (incomingMsg.senderId !== currentUser.id) {
+                const audio = new Audio('/notification.mp3');
+                audio.play().catch(e => console.error("Audio play failed:", e));
+            }
+
             if (incomingMsg.roomId === selectedRoom) {
                 setMessages(prev => {
                     if (prev.some(m => m.id === incomingMsg.id)) return prev

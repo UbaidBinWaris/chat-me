@@ -5,12 +5,24 @@ import next from "next";
 import { Server } from "socket.io";
 import { logger } from "./lib/logger";
 
+declare global {
+    namespace Express {
+        interface Request {
+            io?: Server;
+        }
+    }
+}
+
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
 const port = 3000;
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
+
+declare global {
+    var io: Server;
+}
 
 app.prepare().then(async () => {
     const server = express();
@@ -20,8 +32,10 @@ app.prepare().then(async () => {
         // cors: { origin: "*" } 
     });
 
+    global.io = io;
+
     // Handle all other routes with Next.js
-    server.use((req: express.Request, res: express.Response) => {
+    server.all("*all", (req: express.Request, res: express.Response) => {
         const parsedUrl = parse(req.url!, true);
         handle(req, res, parsedUrl);
     });
