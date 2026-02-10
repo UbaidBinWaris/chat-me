@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, X, User, Check, Clock, MessageCircle } from "lucide-react"
+import { Search, X, User, Check, Clock, MessageCircle, UserPlus } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface UserListModalProps {
@@ -137,8 +137,9 @@ export function UserListModal({ isOpen, onClose, onSelectUser, currentUserId }: 
                         size="sm"
                         onClick={() => handleSendRequest(user.id)}
                         disabled={isProcessing}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        className="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 hover:text-blue-300 border border-blue-500/20 transition-all"
                     >
+                        <UserPlus size={16} className="mr-1.5" />
                         {isProcessing ? 'Sending...' : 'Add Friend'}
                     </Button>
                 )
@@ -262,8 +263,8 @@ export function UserListModal({ isOpen, onClose, onSelectUser, currentUserId }: 
                             filteredUsers.map((user) => (
                                 <motion.div
                                     key={user.id}
-                                    whileHover={{ scale: 1.02 }}
-                                    className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/30 border border-transparent hover:border-blue-500/30 transition-colors"
+                                    whileHover={{ scale: 1.01, backgroundColor: "rgba(31, 41, 55, 0.5)" }}
+                                    className="flex items-center gap-4 p-4 rounded-xl bg-gray-800/20 border border-white/5 hover:border-blue-500/30 transition-all group"
                                 >
                                     {/* Avatar */}
                                     <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center font-bold text-lg text-white flex-shrink-0">

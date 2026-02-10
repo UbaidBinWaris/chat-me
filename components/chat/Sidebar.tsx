@@ -4,10 +4,11 @@ import { useState, useEffect } from "react"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, LogOut, MessageCircle, UserPlus, Bell } from "lucide-react"
+import { Search, Plus, LogOut, MessageCircle, UserPlus, Bell, MoreVertical, Settings } from "lucide-react"
 import { ChatListItem } from "@/components/chat/ChatListItem"
 import { UserListModal } from "@/components/chat/UserListModal"
-import { FriendRequestsPanel } from "@/components/chat/FriendRequestsPanel"
+import { NotificationCenter } from "@/components/chat/NotificationCenter"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface SidebarProps {
     currentUser: any
@@ -38,33 +39,7 @@ export function Sidebar({
     isUserListOpen,
     setIsUserListOpen
 }: SidebarProps) {
-    const [isFriendRequestsOpen, setIsFriendRequestsOpen] = useState(false)
-    const [pendingRequestsCount, setPendingRequestsCount] = useState(0)
 
-    useEffect(() => {
-        fetchPendingRequestsCount()
-        // Poll for new requests every 30 seconds
-        const interval = setInterval(fetchPendingRequestsCount, 30000)
-        return () => clearInterval(interval)
-    }, [])
-
-    const fetchPendingRequestsCount = async () => {
-        try {
-            const res = await fetch('/api/friendships?status=pending')
-            if (res.ok) {
-                const data = await res.json()
-                // Count only incoming requests
-                const incomingCount = data.filter((req: any) => !req.isRequester).length
-                setPendingRequestsCount(incomingCount)
-            }
-        } catch (error) {
-            console.error('Error fetching pending requests:', error)
-        }
-    }
-
-    const handleRequestUpdate = () => {
-        fetchPendingRequestsCount()
-    }
     return (
         <>
             <div className="w-80 border-r border-white/10 flex flex-col bg-gray-900/50 backdrop-blur-xl h-full">
@@ -81,15 +56,14 @@ export function Sidebar({
                             </span>
                         </div>
                     </div>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                        onClick={() => signOut({ callbackUrl: '/' })}
-                        title="Logout"
-                    >
-                        <LogOut size={20} />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                        <NotificationCenter currentUserId={currentUser.id} />
+                        <SidebarMenu
+                            onLogout={() => signOut({ callbackUrl: '/' })}
+                            onFindFriends={() => setIsUserListOpen(true)}
+                            onCreateRoom={() => setIsNewChatOpen(true)}
+                        />
+                    </div>
                 </div>
 
                 {/* Search / New Room Input */}
@@ -115,43 +89,46 @@ export function Sidebar({
                 </div>
 
                 {/* Room List */}
-                <div className="flex-1 overflow-y-auto px-2 space-y-1">
-                    {rooms.map((room) => (
-                        <ChatListItem
-                            key={room.id}
-                            room={room}
-                            selected={selectedRoom === room.id}
-                            onClick={() => onSelectRoom(room.id)}
-                        />
-                    ))}
-                </div>
+                <div className="flex-1 overflow-y-auto px-2 space-y-4">
+                    {/* Groups Section */}
+                    {rooms.filter(r => r.isGroup).length > 0 && (
+                        <div>
+                            <h3 className="px-2 mb-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">Groups</h3>
+                            <div className="space-y-1">
+                                {rooms.filter(r => r.isGroup).map((room) => (
+                                    <ChatListItem
+                                        key={room.id}
+                                        room={room}
+                                        selected={selectedRoom === room.id}
+                                        onClick={() => onSelectRoom(room.id)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
-                {/* Bottom Actions */}
-                <div className="p-4 border-t border-white/10 bg-gray-900/30 space-y-2">
-                    <Button
-                        className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20 relative"
-                        onClick={() => setIsFriendRequestsOpen(true)}
-                    >
-                        <Bell size={18} />
-                        Friend Requests
-                        {pendingRequestsCount > 0 && (
-                            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                                {pendingRequestsCount}
-                            </span>
-                        )}
-                    </Button>
-                    <Button
-                        className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-900/20"
-                        onClick={() => setIsUserListOpen(true)}
-                    >
-                        <UserPlus size={18} /> Find Friends
-                    </Button>
-                    <Button
-                        className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-900/20"
-                        onClick={() => setIsNewChatOpen(true)}
-                    >
-                        <Plus size={18} /> New Room
-                    </Button>
+                    {/* Direct Messages Section */}
+                    {rooms.filter(r => !r.isGroup).length > 0 && (
+                        <div>
+                            <h3 className="px-2 mb-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">Messages</h3>
+                            <div className="space-y-1">
+                                {rooms.filter(r => !r.isGroup).map((room) => (
+                                    <ChatListItem
+                                        key={room.id}
+                                        room={room}
+                                        selected={selectedRoom === room.id}
+                                        onClick={() => onSelectRoom(room.id)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {rooms.length === 0 && (
+                        <div className="p-4 text-center text-gray-500 text-sm">
+                            No chats yet
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -162,14 +139,61 @@ export function Sidebar({
                 onSelectUser={onStartDM}
                 currentUserId={currentUser.id}
             />
-
-            {/* Friend Requests Panel */}
-            <FriendRequestsPanel
-                isOpen={isFriendRequestsOpen}
-                onClose={() => setIsFriendRequestsOpen(false)}
-                currentUserId={currentUser.id}
-                onRequestUpdate={handleRequestUpdate}
-            />
         </>
+    )
+}
+
+function SidebarMenu({ onLogout, onFindFriends, onCreateRoom }: { onLogout: () => void, onFindFriends: () => void, onCreateRoom: () => void }) {
+    const [isOpen, setIsOpen] = useState(false)
+
+    return (
+        <div className="relative">
+            <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-400 hover:text-white hover:bg-white/10"
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                <MoreVertical size={20} />
+            </Button>
+
+            <AnimatePresence>
+                {isOpen && (
+                    <>
+                        <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setIsOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            transition={{ duration: 0.1 }}
+                            className="absolute right-0 mt-2 w-48 bg-gray-900 border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 ring-1 ring-black/5 py-1"
+                        >
+                            <button
+                                onClick={() => { onFindFriends(); setIsOpen(false) }}
+                                className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white flex items-center gap-2"
+                            >
+                                <UserPlus size={16} /> Find Friends
+                            </button>
+                            <button
+                                onClick={() => { onCreateRoom(); setIsOpen(false) }}
+                                className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white flex items-center gap-2"
+                            >
+                                <Plus size={16} /> Create Room
+                            </button>
+                            <div className="my-1 border-t border-white/10" />
+                            <button
+                                onClick={() => { onLogout(); setIsOpen(false) }}
+                                className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2"
+                            >
+                                <LogOut size={16} /> Logout
+                            </button>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+        </div>
     )
 }

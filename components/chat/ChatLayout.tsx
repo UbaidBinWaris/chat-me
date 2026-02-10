@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Phone, Video, Info } from "lucide-react"
+import { Phone, Video, Info, Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSocket } from "@/hooks/useSocket"
 import { ChatMessage } from "@/components/chat/ChatMessage"
@@ -21,6 +21,7 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
     const [newChatName, setNewChatName] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [isUserListOpen, setIsUserListOpen] = useState(false)
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -197,30 +198,56 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
     const currentRoom = rooms.find(r => r.id === selectedRoom)
 
     return (
-        <div className="flex h-screen bg-black text-white overflow-hidden">
-            {/* Sidebar */}
-            <Sidebar
-                currentUser={currentUser}
-                rooms={rooms}
-                selectedRoom={selectedRoom}
-                onSelectRoom={setSelectedRoom}
-                onCreateRoom={handleCreateRoom}
-                onStartDM={handleStartDM}
-                isNewChatOpen={isNewChatOpen}
-                setIsNewChatOpen={setIsNewChatOpen}
-                newChatName={newChatName}
-                setNewChatName={setNewChatName}
-                isUserListOpen={isUserListOpen}
-                setIsUserListOpen={setIsUserListOpen}
-            />
+        <div className="flex h-screen bg-black text-white overflow-hidden relative">
+            {/* Mobile Menu Overlay */}
+            {isMobileMenuOpen && (
+                <div
+                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+            )}
+
+            {/* Sidebar (Responsive) */}
+            <div className={cn(
+                "fixed inset-y-0 left-0 z-50 w-80 bg-gray-900 border-r border-white/10 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
+                isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+            )}>
+                <div className="absolute top-4 right-4 md:hidden z-50">
+                    <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
+                        <X size={20} className="text-gray-400" />
+                    </Button>
+                </div>
+                <Sidebar
+                    currentUser={currentUser}
+                    rooms={rooms}
+                    selectedRoom={selectedRoom}
+                    onSelectRoom={(id) => { setSelectedRoom(id); setIsMobileMenuOpen(false) }}
+                    onCreateRoom={handleCreateRoom}
+                    onStartDM={handleStartDM}
+                    isNewChatOpen={isNewChatOpen}
+                    setIsNewChatOpen={setIsNewChatOpen}
+                    newChatName={newChatName}
+                    setNewChatName={setNewChatName}
+                    isUserListOpen={isUserListOpen}
+                    setIsUserListOpen={setIsUserListOpen}
+                />
+            </div>
 
             {/* Chat Area */}
             {selectedRoom ? (
                 <div className="flex-1 flex flex-col bg-gradient-to-b from-gray-900 to-black relative">
                     {/* Chat Header */}
-                    <div className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-gray-900/50 backdrop-blur-md z-10">
+                    <div className="h-16 border-b border-white/10 flex items-center justify-between px-4 md:px-6 bg-gray-900/50 backdrop-blur-md z-10">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="md:hidden text-gray-400 -ml-2"
+                                onClick={() => setIsMobileMenuOpen(true)}
+                            >
+                                <Menu size={20} />
+                            </Button>
+                            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white flex-shrink-0">
                                 {currentRoom?.name?.[0].toUpperCase()}
                             </div>
                             <div>
