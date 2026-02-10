@@ -165,12 +165,18 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
             audio.play().catch(e => console.error("Audio play failed:", e))
         })
 
+        socket.on("message_deleted", (messageId: string) => {
+            setMessages(prev => prev.filter(msg => msg.id !== messageId))
+        })
+
         return () => {
             socket.off("receive_message")
             socket.off("user_status")
             socket.off("online_users")
             socket.off("message_status_update")
+            socket.off("message_status_update")
             socket.off("new_chat")
+            socket.off("message_deleted")
         }
     }, [socket, selectedRoom, currentUser.id])
 
@@ -262,6 +268,27 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
             console.error("Failed to save message", e)
         } finally {
             setIsLoading(false)
+        }
+    }
+
+    const handleDeleteMessage = async (messageId: string) => {
+        if (!selectedRoom) return
+
+        // Optimistic update
+        setMessages(prev => prev.filter(msg => msg.id !== messageId))
+
+        // Emit to Socket
+        if (socket) {
+            socket.emit("delete_message", { messageId, roomId: selectedRoom })
+        }
+
+        // Call API
+        try {
+            await fetch(`/api/messages/${messageId}`, {
+                method: 'DELETE'
+            })
+        } catch (e) {
+            console.error("Failed to delete message", e)
         }
     }
 
@@ -417,6 +444,7 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                                     setSelectedMessage(m)
                                     setIsMessageInfoOpen(true)
                                 }}
+                                onDelete={handleDeleteMessage}
                             />
                         ))}
                         <div ref={messagesEndRef} />

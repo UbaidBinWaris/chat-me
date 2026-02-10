@@ -75,6 +75,10 @@ app.prepare().then(async () => {
             io.to(data.roomId).emit("receive_message", data);
         });
 
+        socket.on("delete_message", (data: { messageId: string, roomId: string }) => {
+            io.to(data.roomId).emit("message_deleted", data.messageId);
+        });
+
         // Handle read receipt event
         socket.on("mark_read", (data: { roomId: string, userId: string }) => {
             // In a real production app, we might want to broadcast this to other devices of the same user
