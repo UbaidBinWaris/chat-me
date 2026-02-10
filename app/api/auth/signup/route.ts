@@ -1,22 +1,28 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcrypt'
-import { generateOTP, hashOTP, getOTPExpiry } from '@/lib/otp'
-import { sendVerificationOTP } from '@/lib/email'
 import { logOTP } from '@/lib/logger'
+import { jwtVerify } from 'jose'
 
 export async function POST(req: Request) {
     try {
-        const { username, email, password } = await req.json()
+        const { signupToken, username, password } = await req.json()
 
-        if (!username || !email || !password) {
-            return NextResponse.json({ error: 'Username, email, and password are required' }, { status: 400 })
+        if (!signupToken || !username || !password) {
+            return NextResponse.json({ error: 'Signup token, username, and password are required' }, { status: 400 })
         }
 
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        if (!emailRegex.test(email)) {
-            return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
+        // Verify signup token
+        let email: string
+        try {
+            const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'secret')
+            const { payload } = await jwtVerify(signupToken, secret)
+            email = payload.email as string
+
+            if (!email) throw new Error('Invalid token payload')
+        } catch (error) {
+            console.error('Signup token verification failed:', error)
+            return NextResponse.json({ error: 'Invalid or expired signup session' }, { status: 401 })
         }
 
         // Validate password length
@@ -24,7 +30,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Password must be at least 6 characters long' }, { status: 400 })
         }
 
-        // Check if user exists by username or email
+        // Check availability
         const existingUser = await prisma.user.findFirst({
             where: {
                 OR: [
@@ -36,7 +42,7 @@ export async function POST(req: Request) {
 
         if (existingUser) {
             if (existingUser.email === email) {
-                return NextResponse.json({ error: 'Email already taken' }, { status: 400 })
+                return NextResponse.json({ error: 'Email already registered' }, { status: 400 })
             }
             return NextResponse.json({ error: 'Username already taken' }, { status: 400 })
         }
@@ -44,40 +50,27 @@ export async function POST(req: Request) {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        // Generate OTP for email verification
-        const otp = generateOTP()
-        const hashedOTP = await hashOTP(otp)
-        const otpExpiry = getOTPExpiry()
-
-        // Create user with OTP
+        // Create user
+        // We mark email as verified since they passed the OTP check
         const user = await prisma.user.create({
             data: {
                 username,
                 email,
                 password: hashedPassword,
-                emailVerified: null, // Not verified yet
-                emailVerificationOtp: hashedOTP,
-                emailVerificationOtpExpiry: otpExpiry,
-                emailVerificationLastSent: new Date(),
+                emailVerified: new Date(),
+                emailVerificationAttempts: 0,
             },
         })
 
-        // Send verification OTP
-        await sendVerificationOTP(email, otp)
-
-        logOTP('sent verification code on signup', email, { expiresAt: otpExpiry })
-
         return NextResponse.json({
             success: true,
-            message: 'Account created. Please check your email for verification code',
+            message: 'Account created successfully',
             user: {
                 id: user.id,
                 username: user.username,
                 email: user.email,
-                emailVerified: false,
+                emailVerified: true,
             },
-            expiresIn: 120, // 2 minutes
-            canResendAt: Date.now() + 60000, // 1 minute from now
         })
     } catch (error) {
         console.error('Error in SIGNUP:', error)
