@@ -86,7 +86,10 @@ export function ChatMessage({ message, isMe, currentUserId, onShowInfo, onDelete
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         transition={{ duration: 0.2 }}
-                        className={cn("flex", isMe ? "justify-end" : "justify-start")}
+                        className={cn(
+                            "flex w-full mb-4",
+                            isMe ? "justify-end" : "justify-start"
+                        )}
                     >
                         <div
                             className={cn("max-w-[75%] relative")}
@@ -175,7 +178,7 @@ export function ChatMessage({ message, isMe, currentUserId, onShowInfo, onDelete
                                     {/* Show text if it exists and is not just the filename (for files) OR if it is an image caption */}
                                     {(!isFile || (isFile && message.content !== message.fileUrl?.split('/').pop())) && message.content && !isAudio && (
                                         <div className={cn(
-                                            "text-sm leading-relaxed whitespace-pre-wrap break-words",
+                                            "text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]",
                                             (isImage || isFile) && "mt-2 opacity-90"
                                         )}>
                                             {parseMentionsForDisplay(message.content).map((part, index) => {

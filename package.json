@@ -37,7 +37,8 @@
     "tailwind-merge": "^2.6.1",
     "ts-node": "^10.9.2",
     "uuid": "^13.0.0",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

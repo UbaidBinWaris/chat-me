@@ -227,7 +227,7 @@ export function ChatInput({ onSendMessage, isLoading, isGroupChat = false, parti
         <div className="p-4 bg-gray-900/50 backdrop-blur-md border-t border-white/10">
             {/* File Preview */}
             {selectedFiles.length > 0 && (
-                <div className="mb-2 flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-700">
+                <div className="mb-2 flex gap-2 overflow-x-auto pb-2 px-2">
                     {selectedFiles.map((file, index) => (
                         <div key={index} className="relative bg-gray-800 rounded-lg group shrink-0">
                             <button
