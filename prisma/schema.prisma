@@ -31,11 +31,32 @@ model User {
   lastLoginIp                String?
   lastLoginAt                DateTime?
   
-  messages     Message[]
-  participants Participant[]
-  accounts     Account[]
-  sessions     Session[]
+  messages               Message[]
+  participants           Participant[]
+  accounts               Account[]
+  sessions               Session[]
+  sentFriendRequests     Friendship[] @relation("FriendshipRequester")
+  receivedFriendRequests Friendship[] @relation("FriendshipAddressee")
 }
+
+model Friendship {
+  id          String   @id @default(uuid())
+  status      String   // "pending", "accepted", "declined", "blocked"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  requesterId String
+  requester   User     @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  
+  addresseeId String
+  addressee   User     @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId])
+  @@index([addresseeId])
+  @@index([status])
+}
+
 
 model Room {
   id        String   @id @default(uuid())

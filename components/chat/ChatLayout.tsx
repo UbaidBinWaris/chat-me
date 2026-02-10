@@ -20,6 +20,8 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
     const [isNewChatOpen, setIsNewChatOpen] = useState(false)
     const [newChatName, setNewChatName] = useState("")
     const [isLoading, setIsLoading] = useState(false)
+    const [isUserListOpen, setIsUserListOpen] = useState(false)
+
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const socket = useSocket()
@@ -161,6 +163,37 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
         } catch (e) { console.error(e) }
     }
 
+    const handleStartDM = async (otherUserId: string) => {
+        try {
+            const res = await fetch('/api/rooms/dm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ otherUserId })
+            })
+
+            if (res.ok) {
+                const dmRoom = await res.json()
+
+                // Check if room already exists in the list
+                const existingRoom = rooms.find(r => r.id === dmRoom.id)
+
+                if (!existingRoom) {
+                    // Add to rooms list if it's a new DM
+                    setRooms(prev => [dmRoom, ...prev])
+                }
+
+                // Select the DM room
+                setSelectedRoom(dmRoom.id)
+
+                // Join the Socket.IO room
+                if (socket) socket.emit("join_room", dmRoom.id)
+            }
+        } catch (e) {
+            console.error('Error starting DM:', e)
+        }
+    }
+
+
     const currentRoom = rooms.find(r => r.id === selectedRoom)
 
     return (
@@ -172,10 +205,13 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                 selectedRoom={selectedRoom}
                 onSelectRoom={setSelectedRoom}
                 onCreateRoom={handleCreateRoom}
+                onStartDM={handleStartDM}
                 isNewChatOpen={isNewChatOpen}
                 setIsNewChatOpen={setIsNewChatOpen}
                 newChatName={newChatName}
                 setNewChatName={setNewChatName}
+                isUserListOpen={isUserListOpen}
+                setIsUserListOpen={setIsUserListOpen}
             />
 
             {/* Chat Area */}
@@ -189,7 +225,9 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                             </div>
                             <div>
                                 <h3 className="font-semibold text-white">{currentRoom?.name}</h3>
-                                <p className="text-xs text-gray-400">{currentRoom?.participants?.length || 0} participants</p>
+                                {currentRoom?.isGroup && (
+                                    <p className="text-xs text-gray-400">{currentRoom?.participants?.length || 0} participants</p>
+                                )}
                             </div>
                         </div>
                         <div className="flex items-center gap-2 text-gray-400">

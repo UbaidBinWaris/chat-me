@@ -1,6 +1,8 @@
 "use client"
 
+import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
+import { Users, User } from "lucide-react"
 
 interface ChatListItemProps {
     room: any
@@ -10,29 +12,44 @@ interface ChatListItemProps {
 
 export function ChatListItem({ room, selected, onClick }: ChatListItemProps) {
     return (
-        <button
+        <div
             onClick={onClick}
             className={cn(
-                "w-full p-3 rounded-xl flex items-center gap-3 transition-all duration-200 hover:bg-white/5",
-                selected ? "bg-white/10 shadow-lg border border-white/5" : "text-gray-400"
+                "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200",
+                selected
+                    ? "bg-blue-600/20 border-l-4 border-blue-500"
+                    : "hover:bg-gray-800/40 border-l-4 border-transparent"
             )}
         >
-            <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-lg font-medium text-gray-300">
-                {room.name ? room.name[0].toUpperCase() : "?"}
+            {/* Avatar/Icon */}
+            <div className={cn(
+                "w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg text-white flex-shrink-0",
+                room.isGroup
+                    ? "bg-gradient-to-tr from-purple-500 to-pink-500"
+                    : "bg-gradient-to-tr from-blue-500 to-cyan-500"
+            )}>
+                {room.isGroup ? (
+                    <Users size={24} />
+                ) : (
+                    room.name?.[0]?.toUpperCase() || <User size={24} />
+                )}
             </div>
-            <div className="flex-1 text-left">
-                <div className="flex justify-between items-center mb-1">
-                    <span className={cn("font-medium", selected ? "text-white" : "text-gray-300")}>
-                        {room.name || "Unnamed Room"}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                        {room.time ? new Date(room.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+
+            {/* Chat Info */}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-semibold text-white truncate flex items-center gap-2">
+                        {room.name}
+                        {!room.isGroup && (
+                            <span className="text-xs text-gray-500 font-normal">DM</span>
+                        )}
+                    </h3>
+                    <span className="text-xs text-gray-500 flex-shrink-0">
+                        {formatDistanceToNow(new Date(room.time), { addSuffix: true })}
                     </span>
                 </div>
-                <div className="flex justify-between items-center">
-                    <p className="text-xs text-gray-500 truncate max-w-[140px]">{room.lastMessage}</p>
-                </div>
+                <p className="text-sm text-gray-400 truncate">{room.lastMessage}</p>
             </div>
-        </button>
+        </div>
     )
 }

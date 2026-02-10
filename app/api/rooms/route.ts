@@ -1,9 +1,31 @@
 import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET() {
     try {
+        const session = await getServerSession()
+
+        if (!session?.user?.email) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        // Get current user
+        const currentUser = await prisma.user.findUnique({
+            where: { email: session.user.email }
+        })
+
+        if (!currentUser) {
+            return NextResponse.json({ error: 'User not found' }, { status: 404 })
+        }
+
+        // Fetch only rooms where the current user is a participant
         const rooms = await prisma.room.findMany({
+            where: {
+                participants: {
+                    some: { userId: currentUser.id }
+                }
+            },
             include: {
                 participants: {
                     include: { user: true }
@@ -16,17 +38,30 @@ export async function GET() {
             orderBy: { createdAt: 'desc' },
         })
 
-        const formattedRooms = rooms.map(room => ({
-            id: room.id,
-            name: room.name || room.participants.map(p => p.user.username).join(', '),
-            isGroup: room.isGroup,
-            participants: room.participants.map(p => p.user),
-            lastMessage: room.messages[0]?.content || "No messages yet",
-            time: room.messages[0]?.createdAt || room.createdAt,
-        }))
+        const formattedRooms = rooms.map(room => {
+            // For DMs, show the other user's name
+            let roomName = room.name
+            if (!room.isGroup) {
+                const otherUser = room.participants.find(p => p.userId !== currentUser.id)
+                roomName = otherUser?.user.username || 'Unknown User'
+            } else if (!roomName) {
+                // For groups without a name, show participant names
+                roomName = room.participants.map(p => p.user.username).join(', ')
+            }
+
+            return {
+                id: room.id,
+                name: roomName,
+                isGroup: room.isGroup,
+                participants: room.participants.map(p => p.user),
+                lastMessage: room.messages[0]?.content || "No messages yet",
+                time: room.messages[0]?.createdAt || room.createdAt,
+            }
+        })
 
         return NextResponse.json(formattedRooms)
     } catch (error) {
+        console.error('Error fetching rooms:', error)
         return NextResponse.json({ error: 'Error fetching rooms' }, { status: 500 })
     }
 }
