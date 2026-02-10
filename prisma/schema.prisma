@@ -14,6 +14,11 @@ model User {
   password      String
   emailVerified DateTime?
   createdAt     DateTime  @default(now())
+  
+  // Profile
+  bio           String?
+  image         String?
+  phoneNumber   String?
 
   // Email verification OTP
   emailVerificationOtp       String?

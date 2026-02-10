@@ -42,6 +42,9 @@ export const authOptions: NextAuthOptions = {
                     id: user.id,
                     email: user.email,
                     username: user.username,
+                    image: user.image,
+                    bio: user.bio,
+                    phoneNumber: user.phoneNumber,
                 }
             },
         }),
@@ -60,6 +63,9 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.id = user.id
                 token.username = (user as any).username
+                token.image = (user as any).image
+                token.bio = (user as any).bio
+                token.phoneNumber = (user as any).phoneNumber
                 token.email = user.email
             }
             return token
@@ -67,9 +73,23 @@ export const authOptions: NextAuthOptions = {
         async session({ session, token }) {
             // Add user info to session from JWT token
             if (token && session.user) {
-                (session.user as any).id = token.id as string
-                (session.user as any).username = token.username as string
-                session.user.email = token.email as string
+                // Fetch fresh user data from database to ensure updates are reflected immediately
+                const userId = token.id as string || token.sub as string;
+
+                if (userId) {
+                    const freshUser = await prisma.user.findUnique({
+                        where: { id: userId }
+                    });
+
+                    if (freshUser) {
+                        (session.user as any).id = freshUser.id;
+                        (session.user as any).username = freshUser.username;
+                        session.user.image = freshUser.image;
+                        (session.user as any).bio = freshUser.bio;
+                        (session.user as any).phoneNumber = freshUser.phoneNumber;
+                        session.user.email = freshUser.email;
+                    }
+                }
             }
             return session
         },

@@ -5,9 +5,11 @@ import { Bell, Check, X, User } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { formatDistanceToNow } from "date-fns"
+import { cn } from "@/lib/utils"
 
 interface NotificationCenterProps {
     currentUserId: string
+    side?: "top" | "bottom"
 }
 
 interface FriendRequest {
@@ -22,7 +24,7 @@ interface FriendRequest {
     }
 }
 
-export function NotificationCenter({ currentUserId }: NotificationCenterProps) {
+export function NotificationCenter({ currentUserId, side = "bottom" }: NotificationCenterProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [requests, setRequests] = useState<FriendRequest[]>([])
     const [isLoading, setIsLoading] = useState(false)
@@ -118,11 +120,14 @@ export function NotificationCenter({ currentUserId }: NotificationCenterProps) {
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        initial={{ opacity: 0, y: side === "bottom" ? -10 : 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        exit={{ opacity: 0, y: side === "bottom" ? -10 : 10, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-2 w-80 bg-gray-900 border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 ring-1 ring-black/5"
+                        className={cn(
+                            "absolute right-0 w-80 bg-gray-900 border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 ring-1 ring-black/5",
+                            side === "bottom" ? "top-full mt-2" : "bottom-full mb-2"
+                        )}
                     >
                         <div className="p-3 border-b border-white/10 flex justify-between items-center bg-gray-900/50">
                             <h3 className="font-semibold text-sm text-white">Notifications</h3>

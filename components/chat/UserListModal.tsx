@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, X, User, Check, Clock, MessageCircle, UserPlus } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { getAvatar } from "@/lib/avatar"
+import Image from "next/image"
 
 interface UserListModalProps {
     isOpen: boolean
@@ -20,6 +22,7 @@ interface User {
     lastLoginAt?: string
     friendshipStatus: 'none' | 'pending_sent' | 'pending_received' | 'accepted' | 'declined' | 'blocked'
     friendshipId: string | null
+    image?: string | null
 }
 
 export function UserListModal({ isOpen, onClose, onSelectUser, currentUserId }: UserListModalProps) {
@@ -267,8 +270,13 @@ export function UserListModal({ isOpen, onClose, onSelectUser, currentUserId }: 
                                     className="flex items-center gap-4 p-4 rounded-xl bg-gray-800/20 border border-white/5 hover:border-blue-500/30 transition-all group"
                                 >
                                     {/* Avatar */}
-                                    <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center font-bold text-lg text-white flex-shrink-0">
-                                        {user.username[0].toUpperCase()}
+                                    <div className="relative w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/10">
+                                        <Image
+                                            src={getAvatar(user.username, user.image)}
+                                            alt={user.username}
+                                            fill
+                                            className="object-cover"
+                                        />
                                     </div>
 
                                     {/* User Info */}
