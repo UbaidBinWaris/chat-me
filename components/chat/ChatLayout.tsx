@@ -94,10 +94,23 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
         })
 
         socket.on("receive_message", (incomingMsg: any) => {
+            console.log('📨 Received message:', {
+                from: incomingMsg.senderId,
+                currentUser: currentUser.id,
+                shouldPlaySound: incomingMsg.senderId !== currentUser.id
+            })
+
             // Play sound if message is not from current user
             if (incomingMsg.senderId !== currentUser.id) {
-                const audio = new Audio('/notification.mp3');
-                audio.play().catch(e => console.error("Audio play failed:", e));
+                try {
+                    const audio = new Audio('/notification.mp3');
+                    audio.volume = 0.5; // Set volume to 50%
+                    audio.play()
+                        .then(() => console.log('🔔 Notification sound played'))
+                        .catch(e => console.error("❌ Audio play failed:", e));
+                } catch (error) {
+                    console.error("❌ Audio creation failed:", error);
+                }
 
                 // Emit Delivered status if we received it
                 socket.emit("mark_delivered", {
