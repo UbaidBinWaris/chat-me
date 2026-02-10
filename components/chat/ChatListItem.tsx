@@ -8,38 +8,47 @@ interface ChatListItemProps {
     room: any
     selected: boolean
     onClick: () => void
+    isOnline?: boolean
+    unreadCount?: number
 }
 
-export function ChatListItem({ room, selected, onClick }: ChatListItemProps) {
+export function ChatListItem({ room, selected, onClick, isOnline, unreadCount }: ChatListItemProps) {
     return (
         <div
             onClick={onClick}
             className={cn(
-                "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200",
+                "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 relative",
                 selected
                     ? "bg-blue-600/20 border-l-4 border-blue-500"
                     : "hover:bg-gray-800/40 border-l-4 border-transparent"
             )}
         >
             {/* Avatar/Icon */}
-            <div className={cn(
-                "w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg text-white flex-shrink-0 overflow-hidden relative",
-                room.isGroup
-                    ? "bg-gradient-to-tr from-purple-500 to-pink-500"
-                    : (room.image ? "bg-transparent" : "bg-gradient-to-tr from-blue-500 to-cyan-500")
-            )}>
-                {room.isGroup ? (
-                    <Users size={24} />
-                ) : (
-                    room.image ? (
-                        <img
-                            src={room.image}
-                            alt={room.name}
-                            className="w-full h-full object-cover"
-                        />
+            <div className="relative">
+                <div className={cn(
+                    "w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg text-white flex-shrink-0 overflow-hidden relative",
+                    room.isGroup
+                        ? "bg-gradient-to-tr from-purple-500 to-pink-500"
+                        : (room.image ? "bg-transparent" : "bg-gradient-to-tr from-blue-500 to-cyan-500")
+                )}>
+                    {room.isGroup ? (
+                        <Users size={24} />
                     ) : (
-                        room.name?.[0]?.toUpperCase() || <User size={24} />
-                    )
+                        room.image ? (
+                            <img
+                                src={room.image}
+                                alt={room.name}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            room.name?.[0]?.toUpperCase() || <User size={24} />
+                        )
+                    )}
+                </div>
+
+                {/* Online Status Indicator */}
+                {!room.isGroup && isOnline && (
+                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-gray-900 rounded-full z-10"></div>
                 )}
             </div>
 
@@ -48,15 +57,21 @@ export function ChatListItem({ room, selected, onClick }: ChatListItemProps) {
                 <div className="flex items-center justify-between mb-1">
                     <h3 className="font-semibold text-white truncate flex items-center gap-2">
                         {room.name}
-                        {!room.isGroup && (
-                            <span className="text-xs text-gray-500 font-normal">DM</span>
-                        )}
                     </h3>
-                    <span className="text-xs text-gray-500 flex-shrink-0">
-                        {room.time ? formatDistanceToNow(new Date(room.time), { addSuffix: true }) : ""}
-                    </span>
+                    {unreadCount && unreadCount > 0 ? (
+                        <div className="bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.2rem] text-center">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                        </div>
+                    ) : null}
                 </div>
-                <p className="text-sm text-gray-400 truncate">{room.lastMessage}</p>
+                <div className="flex items-center justify-between">
+                    <p className={cn(
+                        "text-sm truncate max-w-[180px]",
+                        unreadCount && unreadCount > 0 ? "text-white font-semibold" : "text-gray-400"
+                    )}>
+                        {room.lastMessage}
+                    </p>
+                </div>
             </div>
         </div>
     )

@@ -28,16 +28,54 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
 
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
-    const socket = useSocket()
+    const socket = useSocket(currentUser?.id)
 
-    // Reset Info Panel when changing rooms
+    // Online Users State
+    const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set())
+
+    // Function to mark room as read
+    const markRoomAsRead = async (roomId: string) => {
+        try {
+            await fetch('/api/rooms/read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roomId })
+            })
+
+            // Update local state
+            setRooms(prev => prev.map(r =>
+                r.id === roomId ? { ...r, unreadCount: 0 } : r
+            ))
+        } catch (e) {
+            console.error("Failed to mark room as read", e)
+        }
+    }
+
+    // Reset Info Panel and Mark Read when changing rooms
     useEffect(() => {
         setIsInfoOpen(false)
+        if (selectedRoom) {
+            markRoomAsRead(selectedRoom)
+        }
     }, [selectedRoom])
 
-    // Socket: Listen for incoming messages
+    // Socket: Listen for incoming messages & Status
     useEffect(() => {
         if (!socket) return
+
+        // Online Status Listeners
+        socket.on("user_status", ({ userId, status }: { userId: string, status: "online" | "offline" }) => {
+            setOnlineUsers(prev => {
+                const newSet = new Set(prev)
+                if (status === "online") newSet.add(userId)
+                else newSet.delete(userId)
+                return newSet
+            })
+        })
+
+        socket.on("online_users", (userIds: string[]) => {
+            setOnlineUsers(new Set(userIds))
+        })
 
         socket.on("receive_message", (incomingMsg: any) => {
             // Play sound if message is not from current user
@@ -51,6 +89,15 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                     if (prev.some(m => m.id === incomingMsg.id)) return prev
                     return [...prev, incomingMsg]
                 })
+                // Mark as read immediately if in the room
+                markRoomAsRead(incomingMsg.roomId)
+            } else {
+                // Increment unread count for other rooms
+                setRooms(prev => prev.map(r =>
+                    r.id === incomingMsg.roomId
+                        ? { ...r, unreadCount: (r.unreadCount || 0) + 1 }
+                        : r
+                ))
             }
 
             setRooms(prev => prev.map(r =>
@@ -66,6 +113,8 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
 
         return () => {
             socket.off("receive_message")
+            socket.off("user_status")
+            socket.off("online_users")
         }
     }, [socket, selectedRoom, currentUser.id])
 
@@ -244,6 +293,7 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                     setNewChatName={setNewChatName}
                     isUserListOpen={isUserListOpen}
                     setIsUserListOpen={setIsUserListOpen}
+                    onlineUsers={onlineUsers}
                 />
             </div>
 

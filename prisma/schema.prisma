@@ -94,7 +94,8 @@ model Participant {
   roomId String
   room   Room   @relation(fields: [roomId], references: [id])
 
-  joinedAt DateTime @default(now())
+  joinedAt   DateTime @default(now())
+  lastReadAt DateTime @default(now()) // Track when the user last read the room
 
   @@unique([userId, roomId])
 }

@@ -28,6 +28,7 @@ interface SidebarProps {
     setNewChatName: (name: string) => void
     isUserListOpen: boolean
     setIsUserListOpen: (isOpen: boolean) => void
+    onlineUsers: Set<string>
 }
 
 export function Sidebar({
@@ -43,6 +44,7 @@ export function Sidebar({
     setNewChatName,
     isUserListOpen,
     setIsUserListOpen,
+    onlineUsers,
     isLoading = false // Optional prop for loading state
 }: SidebarProps & { isLoading?: boolean }) {
     const [searchQuery, setSearchQuery] = useState("")
@@ -146,6 +148,8 @@ export function Sidebar({
                                                         room={room}
                                                         selected={selectedRoom === room.id}
                                                         onClick={() => onSelectRoom(room.id)}
+                                                        unreadCount={room.unreadCount}
+                                                        isOnline={!room.isGroup && room.otherUser && onlineUsers.has(room.otherUser.id)}
                                                     />
                                                 ))}
                                             </motion.div>
@@ -181,6 +185,8 @@ export function Sidebar({
                                                         room={room}
                                                         selected={selectedRoom === room.id}
                                                         onClick={() => onSelectRoom(room.id)}
+                                                        unreadCount={room.unreadCount}
+                                                        isOnline={!room.isGroup && room.otherUser && onlineUsers.has(room.otherUser.id)}
                                                     />
                                                 ))}
                                             </motion.div>
