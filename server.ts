@@ -141,9 +141,99 @@ app.prepare().then(async () => {
             io.to(data.roomId).emit("receive_message", data);
         });
 
-        // Other events - similarly apply checks or trust room mechanism if room join is secured
-        // Since we gated join_room, simple broadcasts to room are relatively safe from *receiving* unauthorized data.
-        // But *sending* requires checks if we want to be strict.
+
+        socket.on("delete_message", async (data: { messageId: string, roomId: string }) => {
+            const isParticipant = await prisma.participant.findUnique({
+                where: { userId_roomId: { userId, roomId: data.roomId } }
+            });
+            if (isParticipant) {
+                io.to(data.roomId).emit("message_deleted", data.messageId);
+            }
+        });
+
+        socket.on("mark_read", async (data: { roomId: string, userId: string }) => {
+            // Simplified: no op or broadcast if needed
+        });
+
+        // Group management events - strict checks recommended for admin actions
+        socket.on("participant_added", async (data: { roomId: string, participants: any[], addedBy: string }) => {
+            const participant = await prisma.participant.findUnique({
+                where: { userId_roomId: { userId, roomId: data.roomId } }
+            });
+            if (participant) {
+                io.to(data.roomId).emit("participant_added", data);
+            }
+        });
+
+        socket.on("participant_removed", async (data: { roomId: string, userId: string, removedBy: string }) => {
+            const participant = await prisma.participant.findUnique({
+                where: { userId_roomId: { userId, roomId: data.roomId } }
+            });
+            if (participant) {
+                io.to(data.roomId).emit("participant_removed", data);
+            }
+        });
+
+        socket.on("participant_role_changed", async (data: { roomId: string, userId: string, role: string, changedBy: string }) => {
+            const participant = await prisma.participant.findUnique({
+                where: { userId_roomId: { userId, roomId: data.roomId } }
+            });
+            if (participant && participant.role === 'admin') { // Admin check?
+                io.to(data.roomId).emit("participant_role_changed", data);
+            }
+        });
+
+        socket.on("group_updated", async (data: { roomId: string, name?: string, description?: string, image?: string, updatedBy: string }) => {
+            const participant = await prisma.participant.findUnique({
+                where: { userId_roomId: { userId, roomId: data.roomId } }
+            });
+            if (participant) {
+                io.to(data.roomId).emit("group_updated", data);
+            }
+        });
+
+        socket.on("user_left_group", async (data: { roomId: string, userId: string, username: string }) => {
+            // User can only make themselves leave, effectively
+            if (data.userId === userId) {
+                io.to(data.roomId).emit("user_left_group", data);
+            }
+        });
+
+        socket.on("group_deleted", async (data: { roomId: string, deletedBy: string }) => {
+            const participant = await prisma.participant.findUnique({
+                where: { userId_roomId: { userId, roomId: data.roomId } }
+            });
+            if (participant && participant.role === 'admin') {
+                io.to(data.roomId).emit("group_deleted", data);
+            }
+        });
+
+        socket.on("add_reaction", async (data: { messageId: string, emoji: string, userId: string, roomId: string, reaction: any }) => {
+            // Verify user is distinct or matches auth
+            if (data.userId !== userId) return;
+
+            const isParticipant = await prisma.participant.findUnique({
+                where: { userId_roomId: { userId, roomId: data.roomId } }
+            });
+
+            if (isParticipant) {
+                logger.info(`Reaction added: ${data.emoji} by ${userId}`);
+                io.to(data.roomId).emit("reaction_added", data);
+            }
+        });
+
+        socket.on("remove_reaction", async (data: { messageId: string, emoji: string, userId: string, roomId: string }) => {
+            if (data.userId !== userId) return;
+
+            const isParticipant = await prisma.participant.findUnique({
+                where: { userId_roomId: { userId, roomId: data.roomId } }
+            });
+
+            if (isParticipant) {
+                logger.info(`Reaction removed: ${data.emoji} by ${userId}`);
+                io.to(data.roomId).emit("reaction_removed", data);
+            }
+        });
 
         socket.on("disconnect", () => {
             if (userId && onlineUsers.has(userId)) {

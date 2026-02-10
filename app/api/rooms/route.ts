@@ -91,6 +91,7 @@ export async function GET() {
     }
 }
 
+
 export async function POST(req: Request) {
     try {
         const session = await getServerSession()
@@ -107,7 +108,19 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 })
         }
 
-        const { name, description, image, isGroup, participantIds } = await req.json()
+        const body = await req.json()
+
+        // Validate input with Zod
+        // We import dynamically or top-level. Top level is better but I adding import here for simplicity in replacement block if I can't touch top.
+        // Actually, let's assume I can add the import at the top in a separate chunk or use require? No, ES modules.
+        // I will use multi_replace to add import.
+
+        // Wait, I am in replace_file_content. I should have used multi_replace to add the import.
+        // I will proceed with this block assuming I will add the import next, or I can use dynamic import()? 
+        // Dynamic import is async: const { RoomCreationSchema } = await import('@/lib/validations');
+
+        const { RoomCreationSchema } = await import('@/lib/validations');
+        const { name, description, image, isGroup, participantIds } = RoomCreationSchema.parse(body);
 
         // Ensure current user is included in participants
         const allParticipantIds = Array.from(new Set([currentUser.id, ...(participantIds || [])]))
@@ -152,7 +165,10 @@ export async function POST(req: Request) {
         }
 
         return NextResponse.json(room)
-    } catch (error) {
+    } catch (error: any) {
+        if (error.name === 'ZodError') {
+            return NextResponse.json({ error: 'Invalid input', details: error.errors }, { status: 400 })
+        }
         console.error('Error creating room:', error)
         return NextResponse.json({ error: 'Error creating room' }, { status: 500 })
     }
