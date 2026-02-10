@@ -13,7 +13,31 @@ export async function GET(req: Request) {
     try {
         const messages = await prisma.message.findMany({
             where: { roomId },
-            include: { sender: true },
+            include: {
+                sender: true,
+                reactions: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                username: true,
+                                image: true
+                            }
+                        }
+                    }
+                },
+                replyTo: {
+                    include: {
+                        sender: {
+                            select: {
+                                id: true,
+                                username: true,
+                                image: true
+                            }
+                        }
+                    }
+                }
+            },
             orderBy: { createdAt: 'asc' },
         })
 
@@ -25,7 +49,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        const { content, roomId, senderId, type, fileUrl } = await req.json()
+        const { content, roomId, senderId, type, fileUrl, replyToId } = await req.json()
 
         if ((!content && type === 'text') || !roomId || !senderId) {
             return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
@@ -45,10 +69,33 @@ export async function POST(req: Request) {
                 senderId,
                 type: type || 'text',
                 fileUrl,
-                mentions
+                mentions,
+                replyToId
             },
             include: {
-                sender: true
+                sender: true,
+                reactions: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                username: true,
+                                image: true
+                            }
+                        }
+                    }
+                },
+                replyTo: {
+                    include: {
+                        sender: {
+                            select: {
+                                id: true,
+                                username: true,
+                                image: true
+                            }
+                        }
+                    }
+                }
             }
         })
 

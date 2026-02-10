@@ -44,6 +44,7 @@ model User {
   receivedFriendRequests Friendship[]  @relation("FriendshipAddressee")
   createdRooms           Room[]        @relation("RoomCreator")
   addedParticipants      Participant[] @relation("ParticipantAdder")
+  reactions              Reaction[]
 }
 
 model Friendship {
@@ -96,11 +97,34 @@ model Message {
   // Mentions - array of user IDs mentioned in this message
   mentions String[] @default([])
 
+  // Reply support
+  replyToId String?
+  replyTo   Message?  @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   Message[] @relation("MessageReplies")
+
+  // Reactions
+  reactions Reaction[]
+
   senderId String
   sender   User   @relation(fields: [senderId], references: [id])
 
   roomId String
   room   Room   @relation(fields: [roomId], references: [id])
+}
+
+model Reaction {
+  id        String   @id @default(uuid())
+  emoji     String   // The emoji character (e.g., "👍", "❤️", "😂")
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, messageId, emoji]) // One emoji per user per message
+  @@index([messageId])
 }
 
 model Participant {

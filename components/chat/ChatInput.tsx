@@ -20,9 +20,11 @@ interface ChatInputProps {
     isLoading?: boolean
     isGroupChat?: boolean
     participants?: User[]
+    replyingTo?: any
+    onCancelReply?: () => void
 }
 
-export function ChatInput({ onSendMessage, isLoading, isGroupChat = false, participants = [] }: ChatInputProps) {
+export function ChatInput({ onSendMessage, isLoading, isGroupChat = false, participants = [], replyingTo, onCancelReply }: ChatInputProps) {
     const [message, setMessage] = useState("")
     const [isRecording, setIsRecording] = useState(false)
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -251,6 +253,30 @@ export function ChatInput({ onSendMessage, isLoading, isGroupChat = false, parti
                             )}
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Reply Preview */}
+            {replyingTo && (
+                <div className="mb-2 bg-gray-800/70 border-l-4 border-blue-500 rounded-r-lg p-3 flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                        <p className="text-xs text-blue-400 font-semibold mb-0.5">
+                            Replying to {replyingTo.sender?.username}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate">
+                            {replyingTo.type === 'audio' ? '🎤 Voice message' :
+                                replyingTo.type === 'image' ? '🖼️ Image' :
+                                    replyingTo.type === 'file' ? '📎 File' :
+                                        replyingTo.content}
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onCancelReply}
+                        className="ml-2 text-gray-400 hover:text-white transition-colors"
+                    >
+                        <X size={16} />
+                    </button>
                 </div>
             )}
 

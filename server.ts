@@ -110,6 +110,17 @@ app.prepare().then(async () => {
             io.to(data.roomId).emit("group_deleted", data);
         });
 
+        // Reaction events
+        socket.on("add_reaction", (data: { messageId: string, emoji: string, userId: string, roomId: string, reaction: any }) => {
+            logger.info(`Reaction added: ${data.emoji} on message ${data.messageId} by ${data.userId}`);
+            io.to(data.roomId).emit("reaction_added", data);
+        });
+
+        socket.on("remove_reaction", (data: { messageId: string, emoji: string, userId: string, roomId: string }) => {
+            logger.info(`Reaction removed: ${data.emoji} on message ${data.messageId} by ${data.userId}`);
+            io.to(data.roomId).emit("reaction_removed", data);
+        });
+
         socket.on("disconnect", () => {
             if (userId && onlineUsers.has(userId)) {
                 const userSockets = onlineUsers.get(userId);

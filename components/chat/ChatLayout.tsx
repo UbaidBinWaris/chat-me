@@ -37,6 +37,9 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
     const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false)
     const [currentRoomDetails, setCurrentRoomDetails] = useState<any>(null)
 
+    // Reply State
+    const [replyingTo, setReplyingTo] = useState<any>(null)
+
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const socket = useSocket(currentUser?.id)
@@ -231,6 +234,28 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
             fetchRooms()
         })
 
+        // Reaction listeners
+        socket.on("reaction_added", (data: { messageId: string, reaction: any }) => {
+            setMessages(prev => prev.map(msg =>
+                msg.id === data.messageId
+                    ? { ...msg, reactions: [...(msg.reactions || []), data.reaction] }
+                    : msg
+            ))
+        })
+
+        socket.on("reaction_removed", (data: { messageId: string, emoji: string, userId: string }) => {
+            setMessages(prev => prev.map(msg =>
+                msg.id === data.messageId
+                    ? {
+                        ...msg,
+                        reactions: msg.reactions?.filter((r: any) =>
+                            !(r.userId === data.userId && r.emoji === data.emoji)
+                        )
+                    }
+                    : msg
+            ))
+        })
+
         return () => {
             socket.off("receive_message")
             socket.off("user_status")
@@ -245,6 +270,8 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
             socket.off("group_updated")
             socket.off("user_left_group")
             socket.off("group_deleted")
+            socket.off("reaction_added")
+            socket.off("reaction_removed")
         }
     }, [socket, selectedRoom, currentUser.id])
 
@@ -330,12 +357,17 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
             createdAt: new Date().toISOString(),
             roomId: selectedRoom,
             type: type,
-            fileUrl: fileUrl
+            fileUrl: fileUrl,
+            replyToId: replyingTo?.id || null,
+            replyTo: replyingTo || null
         }
 
         // Optimistic update
         setMessages(prev => [...prev, tempMsg])
         setIsLoading(true)
+
+        // Clear reply state
+        setReplyingTo(null)
 
         // Emit to Socket Server
         if (socket) {
@@ -352,7 +384,8 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                     roomId: selectedRoom,
                     senderId: currentUser.id,
                     type: type,
-                    fileUrl: fileUrl
+                    fileUrl: fileUrl,
+                    replyToId: replyingTo?.id
                 })
             })
         } catch (e) {
@@ -435,6 +468,75 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
             }
         } catch (e) {
             console.error('Error starting DM:', e)
+        }
+    }
+
+    const handleReact = async (messageId: string, emoji: string) => {
+        if (!selectedRoom) return
+
+        // Check if user already reacted with this emoji
+        const message = messages.find(m => m.id === messageId)
+        const existingReaction = message?.reactions?.find(
+            (r: any) => r.userId === currentUser.id && r.emoji === emoji
+        )
+
+        if (existingReaction) {
+            // Remove reaction
+            try {
+                await fetch('/api/reactions', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messageId,
+                        emoji,
+                        userId: currentUser.id,
+                        roomId: selectedRoom
+                    })
+                })
+
+                // Emit to Socket
+                if (socket) {
+                    socket.emit("remove_reaction", {
+                        messageId,
+                        emoji,
+                        userId: currentUser.id,
+                        roomId: selectedRoom
+                    })
+                }
+            } catch (e) {
+                console.error("Failed to remove reaction", e)
+            }
+        } else {
+            // Add reaction
+            try {
+                const res = await fetch('/api/reactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messageId,
+                        emoji,
+                        userId: currentUser.id,
+                        roomId: selectedRoom
+                    })
+                })
+
+                if (res.ok) {
+                    const reaction = await res.json()
+
+                    // Emit to Socket
+                    if (socket) {
+                        socket.emit("add_reaction", {
+                            messageId,
+                            emoji,
+                            userId: currentUser.id,
+                            roomId: selectedRoom,
+                            reaction
+                        })
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to add reaction", e)
+            }
         }
     }
 
@@ -531,11 +633,14 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                                 key={msg.id}
                                 message={msg}
                                 isMe={msg.senderId === currentUser.id}
+                                currentUserId={currentUser.id}
                                 onShowInfo={(m) => {
                                     setSelectedMessage(m)
                                     setIsMessageInfoOpen(true)
                                 }}
                                 onDelete={handleDeleteMessage}
+                                onReact={handleReact}
+                                onReply={(m) => setReplyingTo(m)}
                             />
                         ))}
                         <div ref={messagesEndRef} />
@@ -547,6 +652,8 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                         isLoading={isLoading}
                         isGroupChat={currentRoom?.isGroup || false}
                         participants={currentRoomDetails?.participants?.map((p: any) => p.user) || []}
+                        replyingTo={replyingTo}
+                        onCancelReply={() => setReplyingTo(null)}
                     />
 
                     {/* User Info Panel */}
