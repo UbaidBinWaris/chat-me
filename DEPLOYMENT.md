@@ -58,46 +58,12 @@ Paste your environment variables (similiar to your local `.env`), ensuring they 
 DATABASE_URL="postgresql://user:password@localhost:5432/dbname?schema=public"
 NEXTAUTH_SECRET="your-super-secret-key"
 NEXTAUTH_URL="http://your-domain-or-ip"
-socket_url="http://your-domain-or-ip:3000"
+socket_url="http://your-domain-or-ip:4000"
 # Add other variables as needed
 NODE_ENV=production
-```
-*Press `Ctrl+X`, then `Y`, then `Enter` to save and exit.*
+PORT=4000
 
-## 5. Database Setup
-
-Run Prisma migrations to set up your database schema:
-```bash
-npx prisma migrate deploy
-npx prisma generate
-```
-
-## 6. Build the Application
-
-Build the Next.js application:
-```bash
-npm run build
-```
-
-## 7. Start the Application with PM2
-
-Since this project uses a custom server (`server.ts`) for Socket.io, you must run `server.ts` instead of the default Next.js start command.
-
-**Important:** Ensure `server.ts` is listening on the correct host. If it's hardcoded to `localhost`, change it to `0.0.0.0` or remove the hostname argument in `server.listen`.
-
-Build and start using `tsx` (or compile manually):
-
-```bash
-# Start with PM2 using tsx interpreter
-pm2 start server.ts --name "chat-app" --interpreter ./node_modules/.bin/tsx
-```
-
-Save the PM2 list so it restarts on reboot:
-```bash
-pm2 save
-pm2 startup
-```
-*Follow the command output by `pm2 startup`.*
+# ...
 
 ## 8. Nginx Reverse Proxy (Recommended)
 
@@ -119,7 +85,7 @@ server {
     server_name your-domain.com; # Replace with your domain or IP
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:4000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
