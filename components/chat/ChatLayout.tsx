@@ -42,7 +42,7 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
 
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
-    const socket = useSocket(currentUser?.id)
+    const socket = useSocket()
 
     // Online Users State
     const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set())
