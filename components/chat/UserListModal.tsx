@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, X, User } from "lucide-react"
+import { Search, X, User, Check, Clock, MessageCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface UserListModalProps {
@@ -18,6 +18,8 @@ interface User {
     username: string
     email: string
     lastLoginAt?: string
+    friendshipStatus: 'none' | 'pending_sent' | 'pending_received' | 'accepted' | 'declined' | 'blocked'
+    friendshipId: string | null
 }
 
 export function UserListModal({ isOpen, onClose, onSelectUser, currentUserId }: UserListModalProps) {
@@ -25,6 +27,7 @@ export function UserListModal({ isOpen, onClose, onSelectUser, currentUserId }: 
     const [filteredUsers, setFilteredUsers] = useState<User[]>([])
     const [searchQuery, setSearchQuery] = useState("")
     const [isLoading, setIsLoading] = useState(false)
+    const [processingId, setProcessingId] = useState<string | null>(null)
 
     useEffect(() => {
         if (isOpen) {
@@ -60,10 +63,141 @@ export function UserListModal({ isOpen, onClose, onSelectUser, currentUserId }: 
         }
     }
 
-    const handleSelectUser = (userId: string) => {
+    const handleSendRequest = async (userId: string) => {
+        setProcessingId(userId)
+        try {
+            const res = await fetch('/api/friendships', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ addresseeId: userId })
+            })
+
+            if (res.ok) {
+                // Refresh users to update friendship status
+                fetchUsers()
+            }
+        } catch (error) {
+            console.error('Error sending friend request:', error)
+        } finally {
+            setProcessingId(null)
+        }
+    }
+
+    const handleAcceptRequest = async (friendshipId: string, userId: string) => {
+        setProcessingId(userId)
+        try {
+            const res = await fetch(`/api/friendships/${friendshipId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'accepted' })
+            })
+
+            if (res.ok) {
+                fetchUsers()
+            }
+        } catch (error) {
+            console.error('Error accepting friend request:', error)
+        } finally {
+            setProcessingId(null)
+        }
+    }
+
+    const handleDeclineRequest = async (friendshipId: string, userId: string) => {
+        setProcessingId(userId)
+        try {
+            const res = await fetch(`/api/friendships/${friendshipId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'declined' })
+            })
+
+            if (res.ok) {
+                fetchUsers()
+            }
+        } catch (error) {
+            console.error('Error declining friend request:', error)
+        } finally {
+            setProcessingId(null)
+        }
+    }
+
+    const handleStartChat = (userId: string) => {
         onSelectUser(userId)
         onClose()
         setSearchQuery("")
+    }
+
+    const renderActionButton = (user: User) => {
+        const isProcessing = processingId === user.id
+
+        switch (user.friendshipStatus) {
+            case 'none':
+                return (
+                    <Button
+                        size="sm"
+                        onClick={() => handleSendRequest(user.id)}
+                        disabled={isProcessing}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                        {isProcessing ? 'Sending...' : 'Add Friend'}
+                    </Button>
+                )
+
+            case 'pending_sent':
+                return (
+                    <Button
+                        size="sm"
+                        disabled
+                        className="bg-gray-600 text-gray-300 cursor-not-allowed"
+                    >
+                        <Clock size={14} className="mr-1" />
+                        Pending
+                    </Button>
+                )
+
+            case 'pending_received':
+                return (
+                    <div className="flex gap-1">
+                        <Button
+                            size="sm"
+                            onClick={() => handleAcceptRequest(user.friendshipId!, user.id)}
+                            disabled={isProcessing}
+                            className="bg-green-600 hover:bg-green-700 text-white px-2"
+                        >
+                            <Check size={14} />
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeclineRequest(user.friendshipId!, user.id)}
+                            disabled={isProcessing}
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10 px-2"
+                        >
+                            <X size={14} />
+                        </Button>
+                    </div>
+                )
+
+            case 'accepted':
+                return (
+                    <Button
+                        size="sm"
+                        onClick={() => handleStartChat(user.id)}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                        <MessageCircle size={14} className="mr-1" />
+                        Chat
+                    </Button>
+                )
+
+            case 'blocked':
+                return (
+                    <span className="text-xs text-red-400">Blocked</span>
+                )
+
+            default:
+                return null
+        }
     }
 
     if (!isOpen) return null
@@ -89,7 +223,7 @@ export function UserListModal({ isOpen, onClose, onSelectUser, currentUserId }: 
                 >
                     {/* Header */}
                     <div className="p-6 border-b border-white/10 flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-white">Start a Conversation</h2>
+                        <h2 className="text-xl font-bold text-white">Find Friends</h2>
                         <Button
                             variant="ghost"
                             size="icon"
@@ -129,9 +263,7 @@ export function UserListModal({ isOpen, onClose, onSelectUser, currentUserId }: 
                                 <motion.div
                                     key={user.id}
                                     whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/30 hover:bg-gray-800/60 cursor-pointer transition-colors border border-transparent hover:border-blue-500/30"
-                                    onClick={() => handleSelectUser(user.id)}
+                                    className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/30 border border-transparent hover:border-blue-500/30 transition-colors"
                                 >
                                     {/* Avatar */}
                                     <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center font-bold text-lg text-white flex-shrink-0">
@@ -144,12 +276,10 @@ export function UserListModal({ isOpen, onClose, onSelectUser, currentUserId }: 
                                         <p className="text-xs text-gray-400 truncate">{user.email}</p>
                                     </div>
 
-                                    {/* Online Status (placeholder) */}
-                                    {user.lastLoginAt && (
-                                        <div className="flex items-center gap-1">
-                                            <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
-                                        </div>
-                                    )}
+                                    {/* Action Button */}
+                                    <div className="flex-shrink-0">
+                                        {renderActionButton(user)}
+                                    </div>
                                 </motion.div>
                             ))
                         )}

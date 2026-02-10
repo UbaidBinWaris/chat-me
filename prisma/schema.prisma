@@ -8,55 +8,54 @@ datasource db {
 }
 
 model User {
-  id               String    @id @default(uuid())
-  username         String    @unique
-  email            String    @unique
-  password         String
-  emailVerified    DateTime?
-  createdAt        DateTime  @default(now())
-  
+  id            String    @id @default(uuid())
+  username      String    @unique
+  email         String    @unique
+  password      String
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+
   // Email verification OTP
   emailVerificationOtp       String?
   emailVerificationOtpExpiry DateTime?
   emailVerificationAttempts  Int       @default(0)
   emailVerificationLastSent  DateTime?
-  
+
   // Password reset OTP
-  passwordResetOtp           String?
-  passwordResetOtpExpiry     DateTime?
-  passwordResetAttempts      Int       @default(0)
-  passwordResetLastSent      DateTime?
-  
+  passwordResetOtp       String?
+  passwordResetOtpExpiry DateTime?
+  passwordResetAttempts  Int       @default(0)
+  passwordResetLastSent  DateTime?
+
   // Security tracking
-  lastLoginIp                String?
-  lastLoginAt                DateTime?
-  
+  lastLoginIp String?
+  lastLoginAt DateTime?
+
   messages               Message[]
   participants           Participant[]
   accounts               Account[]
   sessions               Session[]
-  sentFriendRequests     Friendship[] @relation("FriendshipRequester")
-  receivedFriendRequests Friendship[] @relation("FriendshipAddressee")
+  sentFriendRequests     Friendship[]  @relation("FriendshipRequester")
+  receivedFriendRequests Friendship[]  @relation("FriendshipAddressee")
 }
 
 model Friendship {
-  id          String   @id @default(uuid())
-  status      String   // "pending", "accepted", "declined", "blocked"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id        String   @id @default(uuid())
+  status    String // "pending", "accepted", "declined", "blocked"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   requesterId String
-  requester   User     @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
-  
+  requester   User   @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
   addresseeId String
-  addressee   User     @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
-  
+  addressee   User   @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
   @@unique([requesterId, addresseeId])
   @@index([requesterId])
   @@index([addresseeId])
   @@index([status])
 }
-
 
 model Room {
   id        String   @id @default(uuid())
@@ -68,31 +67,29 @@ model Room {
   participants Participant[]
 }
 
-
-
 model Message {
   id        String   @id @default(uuid())
-  content   String?  // Content can be empty if it's just an attachment
+  content   String? // Content can be empty if it's just an attachment
   fileUrl   String?
   type      String   @default("text") // text, audio, image
   createdAt DateTime @default(now())
-  
-  senderId  String
-  sender    User     @relation(fields: [senderId], references: [id])
-  
-  roomId    String
-  room      Room     @relation(fields: [roomId], references: [id])
+
+  senderId String
+  sender   User   @relation(fields: [senderId], references: [id])
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id])
 }
 
 model Participant {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  
-  roomId    String
-  room      Room     @relation(fields: [roomId], references: [id])
-  
-  joinedAt  DateTime @default(now())
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id])
+
+  joinedAt DateTime @default(now())
 
   @@unique([userId, roomId])
 }

@@ -1,11 +1,13 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, MoreVertical, LogOut, MessageCircle } from "lucide-react"
+import { Search, Plus, LogOut, MessageCircle, UserPlus, Bell } from "lucide-react"
 import { ChatListItem } from "@/components/chat/ChatListItem"
 import { UserListModal } from "@/components/chat/UserListModal"
+import { FriendRequestsPanel } from "@/components/chat/FriendRequestsPanel"
 
 interface SidebarProps {
     currentUser: any
@@ -36,6 +38,33 @@ export function Sidebar({
     isUserListOpen,
     setIsUserListOpen
 }: SidebarProps) {
+    const [isFriendRequestsOpen, setIsFriendRequestsOpen] = useState(false)
+    const [pendingRequestsCount, setPendingRequestsCount] = useState(0)
+
+    useEffect(() => {
+        fetchPendingRequestsCount()
+        // Poll for new requests every 30 seconds
+        const interval = setInterval(fetchPendingRequestsCount, 30000)
+        return () => clearInterval(interval)
+    }, [])
+
+    const fetchPendingRequestsCount = async () => {
+        try {
+            const res = await fetch('/api/friendships?status=pending')
+            if (res.ok) {
+                const data = await res.json()
+                // Count only incoming requests
+                const incomingCount = data.filter((req: any) => !req.isRequester).length
+                setPendingRequestsCount(incomingCount)
+            }
+        } catch (error) {
+            console.error('Error fetching pending requests:', error)
+        }
+    }
+
+    const handleRequestUpdate = () => {
+        fetchPendingRequestsCount()
+    }
     return (
         <>
             <div className="w-80 border-r border-white/10 flex flex-col bg-gray-900/50 backdrop-blur-xl h-full">
@@ -100,10 +129,22 @@ export function Sidebar({
                 {/* Bottom Actions */}
                 <div className="p-4 border-t border-white/10 bg-gray-900/30 space-y-2">
                     <Button
-                        className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20"
+                        className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20 relative"
+                        onClick={() => setIsFriendRequestsOpen(true)}
+                    >
+                        <Bell size={18} />
+                        Friend Requests
+                        {pendingRequestsCount > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                {pendingRequestsCount}
+                            </span>
+                        )}
+                    </Button>
+                    <Button
+                        className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-900/20"
                         onClick={() => setIsUserListOpen(true)}
                     >
-                        <MessageCircle size={18} /> New DM
+                        <UserPlus size={18} /> Find Friends
                     </Button>
                     <Button
                         className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-900/20"
@@ -120,6 +161,14 @@ export function Sidebar({
                 onClose={() => setIsUserListOpen(false)}
                 onSelectUser={onStartDM}
                 currentUserId={currentUser.id}
+            />
+
+            {/* Friend Requests Panel */}
+            <FriendRequestsPanel
+                isOpen={isFriendRequestsOpen}
+                onClose={() => setIsFriendRequestsOpen(false)}
+                currentUserId={currentUser.id}
+                onRequestUpdate={handleRequestUpdate}
             />
         </>
     )

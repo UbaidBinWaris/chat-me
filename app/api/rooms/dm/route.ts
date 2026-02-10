@@ -25,6 +25,23 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 })
         }
 
+        // Check if users are friends
+        const friendship = await prisma.friendship.findFirst({
+            where: {
+                OR: [
+                    { requesterId: currentUser.id, addresseeId: otherUserId },
+                    { requesterId: otherUserId, addresseeId: currentUser.id }
+                ],
+                status: 'accepted'
+            }
+        })
+
+        if (!friendship) {
+            return NextResponse.json({
+                error: 'You must be friends to start a DM. Please send a friend request first.'
+            }, { status: 403 })
+        }
+
         // Check if DM room already exists between these two users
         const existingRoom = await prisma.room.findFirst({
             where: {

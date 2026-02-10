@@ -34,7 +34,48 @@ export async function GET() {
             orderBy: { username: 'asc' }
         })
 
-        return NextResponse.json(users)
+        // Get all friendships involving current user
+        const friendships = await prisma.friendship.findMany({
+            where: {
+                OR: [
+                    { requesterId: currentUser.id },
+                    { addresseeId: currentUser.id }
+                ]
+            }
+        })
+
+        // Add friendship status to each user
+        const usersWithFriendshipStatus = users.map(user => {
+            const friendship = friendships.find(f =>
+                f.requesterId === user.id || f.addresseeId === user.id
+            )
+
+            let friendshipStatus = 'none'
+            let friendshipId = null
+
+            if (friendship) {
+                friendshipId = friendship.id
+                if (friendship.status === 'accepted') {
+                    friendshipStatus = 'accepted'
+                } else if (friendship.status === 'pending') {
+                    friendshipStatus = friendship.requesterId === currentUser.id
+                        ? 'pending_sent'
+                        : 'pending_received'
+                } else if (friendship.status === 'declined') {
+                    friendshipStatus = 'declined'
+                } else if (friendship.status === 'blocked') {
+                    friendshipStatus = 'blocked'
+                }
+            }
+
+            return {
+                ...user,
+                friendshipStatus,
+                friendshipId
+            }
+        })
+
+        return NextResponse.json(usersWithFriendshipStatus)
     } catch (error) {
         console.error('Error fetching users:', error)
         return NextResponse.json({ error: 'Error fetching users' }, { status: 500 })
