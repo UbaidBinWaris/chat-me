@@ -23,15 +23,23 @@ export function ChatListItem({ room, selected, onClick }: ChatListItemProps) {
         >
             {/* Avatar/Icon */}
             <div className={cn(
-                "w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg text-white flex-shrink-0",
+                "w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg text-white flex-shrink-0 overflow-hidden relative",
                 room.isGroup
                     ? "bg-gradient-to-tr from-purple-500 to-pink-500"
-                    : "bg-gradient-to-tr from-blue-500 to-cyan-500"
+                    : (room.image ? "bg-transparent" : "bg-gradient-to-tr from-blue-500 to-cyan-500")
             )}>
                 {room.isGroup ? (
                     <Users size={24} />
                 ) : (
-                    room.name?.[0]?.toUpperCase() || <User size={24} />
+                    room.image ? (
+                        <img
+                            src={room.image}
+                            alt={room.name}
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        room.name?.[0]?.toUpperCase() || <User size={24} />
+                    )
                 )}
             </div>
 

@@ -39,11 +39,15 @@ export async function GET() {
         })
 
         const formattedRooms = rooms.map(room => {
-            // For DMs, show the other user's name
+            // For DMs, show the other user's name and image
             let roomName = room.name
+            let roomImage = null
+            let otherUser = null
+
             if (!room.isGroup) {
-                const otherUser = room.participants.find(p => p.userId !== currentUser.id)
-                roomName = otherUser?.user.username || 'Unknown User'
+                otherUser = room.participants.find(p => p.userId !== currentUser.id)?.user
+                roomName = otherUser?.username || 'Unknown User'
+                roomImage = otherUser?.image || null
             } else if (!roomName) {
                 // For groups without a name, show participant names
                 roomName = room.participants.map(p => p.user.username).join(', ')
@@ -52,10 +56,12 @@ export async function GET() {
             return {
                 id: room.id,
                 name: roomName,
+                image: roomImage,
                 isGroup: room.isGroup,
                 participants: room.participants.map(p => p.user),
                 lastMessage: room.messages[0]?.content || "No messages yet",
                 time: room.messages[0]?.createdAt || room.createdAt,
+                otherUser: otherUser // Pass the full other user object for the info panel
             }
         })
 

@@ -9,6 +9,8 @@ import { ChatMessage } from "@/components/chat/ChatMessage"
 import { ChatInput } from "@/components/chat/ChatInput"
 import { Sidebar } from "@/components/chat/Sidebar"
 
+import { UserInfoPanel } from "@/components/chat/UserInfoPanel"
+
 interface ChatLayoutProps {
     currentUser: any
 }
@@ -22,10 +24,16 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [isUserListOpen, setIsUserListOpen] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const [isInfoOpen, setIsInfoOpen] = useState(false)
 
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const socket = useSocket()
+
+    // Reset Info Panel when changing rooms
+    useEffect(() => {
+        setIsInfoOpen(false)
+    }, [selectedRoom])
 
     // Socket: Listen for incoming messages
     useEffect(() => {
@@ -59,7 +67,7 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
         return () => {
             socket.off("receive_message")
         }
-    }, [socket, selectedRoom])
+    }, [socket, selectedRoom, currentUser.id])
 
 
     // Fetch Rooms (Initial Load Only)
@@ -253,8 +261,16 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                             >
                                 <Menu size={20} />
                             </Button>
-                            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white flex-shrink-0">
-                                {currentRoom?.name?.[0].toUpperCase()}
+                            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white flex-shrink-0 overflow-hidden relative">
+                                {currentRoom?.isGroup ? (
+                                    <span className="text-lg">{currentRoom?.name?.[0].toUpperCase()}</span>
+                                ) : (
+                                    currentRoom?.image ? (
+                                        <img src={currentRoom.image} alt={currentRoom.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-lg">{currentRoom?.name?.[0].toUpperCase()}</span>
+                                    )
+                                )}
                             </div>
                             <div>
                                 <h3 className="font-semibold text-white">{currentRoom?.name}</h3>
@@ -266,7 +282,14 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                         <div className="flex items-center gap-2 text-gray-400">
                             <Button variant="ghost" size="icon"><Phone size={20} /></Button>
                             <Button variant="ghost" size="icon"><Video size={20} /></Button>
-                            <Button variant="ghost" size="icon"><Info size={20} /></Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setIsInfoOpen(!isInfoOpen)}
+                                className={cn(isInfoOpen && "text-blue-500 bg-blue-500/10")}
+                            >
+                                <Info size={20} />
+                            </Button>
                         </div>
                     </div>
 
@@ -284,6 +307,13 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
 
                     {/* Chat Input */}
                     <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+
+                    {/* User Info Panel */}
+                    <UserInfoPanel
+                        isOpen={isInfoOpen && !currentRoom?.isGroup}
+                        onClose={() => setIsInfoOpen(false)}
+                        user={currentRoom?.otherUser}
+                    />
                 </div>
             ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-gray-500 space-y-4">
