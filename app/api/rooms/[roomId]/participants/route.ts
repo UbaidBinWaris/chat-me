@@ -86,8 +86,7 @@ export async function POST(
                     data: {
                         userId,
                         roomId: roomId,
-                        role: 'member',
-                        addedBy: currentUser.id
+                        role: 'member'
                     },
                     include: {
                         user: {

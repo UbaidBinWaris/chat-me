@@ -123,8 +123,7 @@ export async function POST(req: Request) {
                     create: allParticipantIds.map((id: string) => ({
                         user: { connect: { id } },
                         // Set creator as admin for groups
-                        role: isGroup && id === currentUser.id ? 'admin' : 'member',
-                        addedBy: currentUser.id
+                        role: isGroup && id === currentUser.id ? 'admin' : 'member'
                     }))
                 }
             },
@@ -141,6 +140,16 @@ export async function POST(req: Request) {
                 }
             }
         })
+
+        // Emit socket event to all participants
+        if (global.io) {
+            room.participants.forEach((participant: any) => {
+                global.io.emit('new_chat', {
+                    ...room,
+                    userId: participant.userId
+                })
+            })
+        }
 
         return NextResponse.json(room)
     } catch (error) {
