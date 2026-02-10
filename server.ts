@@ -85,6 +85,31 @@ app.prepare().then(async () => {
             // or even to other users in the room to show "Seen by X"
         });
 
+        // Group management events
+        socket.on("participant_added", (data: { roomId: string, participants: any[], addedBy: string }) => {
+            io.to(data.roomId).emit("participant_added", data);
+        });
+
+        socket.on("participant_removed", (data: { roomId: string, userId: string, removedBy: string }) => {
+            io.to(data.roomId).emit("participant_removed", data);
+        });
+
+        socket.on("participant_role_changed", (data: { roomId: string, userId: string, role: string, changedBy: string }) => {
+            io.to(data.roomId).emit("participant_role_changed", data);
+        });
+
+        socket.on("group_updated", (data: { roomId: string, name?: string, description?: string, image?: string, updatedBy: string }) => {
+            io.to(data.roomId).emit("group_updated", data);
+        });
+
+        socket.on("user_left_group", (data: { roomId: string, userId: string, username: string }) => {
+            io.to(data.roomId).emit("user_left_group", data);
+        });
+
+        socket.on("group_deleted", (data: { roomId: string, deletedBy: string }) => {
+            io.to(data.roomId).emit("group_deleted", data);
+        });
+
         socket.on("disconnect", () => {
             if (userId && onlineUsers.has(userId)) {
                 const userSockets = onlineUsers.get(userId);

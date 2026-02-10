@@ -14,6 +14,7 @@ import { useRef } from "react"
 import { toast } from "sonner"
 import { SettingsModal } from "./settings/SettingsModal"
 import { getAvatar } from "@/lib/avatar"
+import { CreateGroupModal } from "@/components/chat/CreateGroupModal"
 
 interface SidebarProps {
     currentUser: any
@@ -51,6 +52,7 @@ export function Sidebar({
     const [isGroupsOpen, setIsGroupsOpen] = useState(true)
     const [isMessagesOpen, setIsMessagesOpen] = useState(true)
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+    const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
 
     const filteredRooms = rooms.filter(room =>
         room.name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -238,6 +240,7 @@ export function Sidebar({
                             onFindFriends={() => setIsUserListOpen(true)}
                             onCreateRoom={() => setIsNewChatOpen(true)}
                             onOpenSettings={() => setIsSettingsOpen(true)}
+                            onCreateGroup={() => setIsCreateGroupOpen(true)}
                         />
                     </div>
                 </div>
@@ -257,11 +260,27 @@ export function Sidebar({
                 onClose={() => setIsSettingsOpen(false)}
                 currentUser={currentUser}
             />
+
+            {/* Create Group Modal */}
+            <CreateGroupModal
+                isOpen={isCreateGroupOpen}
+                onClose={() => setIsCreateGroupOpen(false)}
+                currentUserId={currentUser.id}
+                onSuccess={(roomId) => {
+                    onSelectRoom(roomId)
+                }}
+            />
         </>
     )
 }
 
-function SidebarMenu({ onLogout, onFindFriends, onCreateRoom, onOpenSettings }: { onLogout: () => void, onFindFriends: () => void, onCreateRoom: () => void, onOpenSettings: () => void }) {
+function SidebarMenu({ onLogout, onFindFriends, onCreateRoom, onOpenSettings, onCreateGroup }: {
+    onLogout: () => void,
+    onFindFriends: () => void,
+    onCreateRoom: () => void,
+    onOpenSettings: () => void,
+    onCreateGroup: () => void
+}) {
     const [isOpen, setIsOpen] = useState(false)
 
     return (
@@ -296,10 +315,16 @@ function SidebarMenu({ onLogout, onFindFriends, onCreateRoom, onOpenSettings }: 
                                 <UserPlus size={16} /> Find Friends
                             </button>
                             <button
+                                onClick={() => { onCreateGroup(); setIsOpen(false) }}
+                                className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white flex items-center gap-2"
+                            >
+                                <Plus size={16} /> Create Group
+                            </button>
+                            <button
                                 onClick={() => { onCreateRoom(); setIsOpen(false) }}
                                 className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white flex items-center gap-2"
                             >
-                                <Plus size={16} /> Create Room
+                                <MessageCircle size={16} /> Create Room
                             </button>
                             <button
                                 onClick={() => { onOpenSettings(); setIsOpen(false) }}

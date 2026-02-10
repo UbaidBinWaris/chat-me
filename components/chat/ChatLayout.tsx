@@ -11,6 +11,8 @@ import { Sidebar } from "@/components/chat/Sidebar"
 import { MessageInfoModal } from "@/components/chat/MessageInfoModal"
 
 import { UserInfoPanel } from "@/components/chat/UserInfoPanel"
+import { GroupInfoPanel } from "@/components/chat/GroupInfoPanel"
+import { AddParticipantModal } from "@/components/chat/AddParticipantModal"
 
 interface ChatLayoutProps {
     currentUser: any
@@ -30,6 +32,10 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
     // Message Info Modal
     const [selectedMessage, setSelectedMessage] = useState<any>(null)
     const [isMessageInfoOpen, setIsMessageInfoOpen] = useState(false)
+
+    // Group Management
+    const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false)
+    const [currentRoomDetails, setCurrentRoomDetails] = useState<any>(null)
 
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -169,6 +175,49 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
             setMessages(prev => prev.filter(msg => msg.id !== messageId))
         })
 
+        // Group event listeners
+        socket.on("participant_added", (data: any) => {
+            if (data.roomId === selectedRoom) {
+                fetchRoomDetails()
+            }
+            fetchRooms()
+        })
+
+        socket.on("participant_removed", (data: any) => {
+            if (data.roomId === selectedRoom) {
+                fetchRoomDetails()
+            }
+            fetchRooms()
+        })
+
+        socket.on("participant_role_changed", (data: any) => {
+            if (data.roomId === selectedRoom) {
+                fetchRoomDetails()
+            }
+            fetchRooms()
+        })
+
+        socket.on("group_updated", (data: any) => {
+            if (data.roomId === selectedRoom) {
+                fetchRoomDetails()
+            }
+            fetchRooms()
+        })
+
+        socket.on("user_left_group", (data: any) => {
+            if (data.roomId === selectedRoom) {
+                fetchRoomDetails()
+            }
+            fetchRooms()
+        })
+
+        socket.on("group_deleted", (data: any) => {
+            if (data.roomId === selectedRoom) {
+                setSelectedRoom(null)
+            }
+            fetchRooms()
+        })
+
         return () => {
             socket.off("receive_message")
             socket.off("user_status")
@@ -177,30 +226,59 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
             socket.off("message_status_update")
             socket.off("new_chat")
             socket.off("message_deleted")
+            socket.off("participant_added")
+            socket.off("participant_removed")
+            socket.off("participant_role_changed")
+            socket.off("group_updated")
+            socket.off("user_left_group")
+            socket.off("group_deleted")
         }
     }, [socket, selectedRoom, currentUser.id])
 
 
+    // Fetch Rooms function
+    const fetchRooms = async () => {
+        try {
+            const res = await fetch('/api/rooms')
+            if (res.ok) {
+                const data = await res.json()
+                setRooms(data)
+
+                // Join all rooms to receive real-time updates for them
+                if (socket && data.length > 0) {
+                    data.forEach((room: any) => {
+                        socket.emit("join_room", room.id)
+                    })
+                }
+            }
+        } catch (e) { console.error(e) }
+    }
+
+    // Fetch Room Details function
+    const fetchRoomDetails = async () => {
+        if (!selectedRoom) return
+        try {
+            const res = await fetch(`/api/rooms/${selectedRoom}`)
+            if (res.ok) {
+                const data = await res.json()
+                setCurrentRoomDetails(data)
+            }
+        } catch (e) { console.error(e) }
+    }
+
     // Fetch Rooms (Initial Load Only)
     useEffect(() => {
-        const fetchRooms = async () => {
-            try {
-                const res = await fetch('/api/rooms')
-                if (res.ok) {
-                    const data = await res.json()
-                    setRooms(data)
-
-                    // Join all rooms to receive real-time updates for them
-                    if (socket && data.length > 0) {
-                        data.forEach((room: any) => {
-                            socket.emit("join_room", room.id)
-                        })
-                    }
-                }
-            } catch (e) { console.error(e) }
-        }
         fetchRooms()
     }, [socket])
+
+    // Fetch room details when selected room changes
+    useEffect(() => {
+        if (selectedRoom) {
+            fetchRoomDetails()
+        } else {
+            setCurrentRoomDetails(null)
+        }
+    }, [selectedRoom])
 
     // Fetch Messages & Join Room
     useEffect(() => {
@@ -460,11 +538,36 @@ export function ChatLayout({ currentUser }: ChatLayoutProps) {
                         user={currentRoom?.otherUser}
                     />
 
+                    {/* Group Info Panel */}
+                    <GroupInfoPanel
+                        isOpen={isInfoOpen && currentRoom?.isGroup}
+                        onClose={() => setIsInfoOpen(false)}
+                        room={currentRoomDetails || currentRoom}
+                        currentUserId={currentUser.id}
+                        onAddParticipants={() => setIsAddParticipantOpen(true)}
+                        onRefresh={() => {
+                            fetchRoomDetails()
+                            fetchRooms()
+                        }}
+                    />
+
                     {/* Message Info Modal */}
                     <MessageInfoModal
                         isOpen={isMessageInfoOpen}
                         onClose={() => setIsMessageInfoOpen(false)}
                         message={selectedMessage}
+                    />
+
+                    {/* Add Participant Modal */}
+                    <AddParticipantModal
+                        isOpen={isAddParticipantOpen}
+                        onClose={() => setIsAddParticipantOpen(false)}
+                        roomId={selectedRoom || ''}
+                        currentParticipants={currentRoomDetails?.participants || []}
+                        onSuccess={() => {
+                            fetchRoomDetails()
+                            fetchRooms()
+                        }}
                     />
                 </div>
             ) : (

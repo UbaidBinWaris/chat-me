@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { User, MessageSquare, Shield, X } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -22,6 +22,7 @@ export function SettingsModal({ isOpen, onClose, currentUser }: SettingsModalPro
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-4xl p-0 gap-0 bg-gray-950 border-white/10 text-white overflow-hidden h-[600px] flex">
+                <DialogTitle className="sr-only">Settings</DialogTitle>
                 {/* Left Sidebar - Navigation */}
                 <div className="w-64 bg-gray-900/50 border-r border-white/10 flex flex-col p-4">
                     <div className="mb-8 pl-2">

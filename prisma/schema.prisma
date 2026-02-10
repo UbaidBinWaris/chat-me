@@ -42,6 +42,8 @@ model User {
   sessions               Session[]
   sentFriendRequests     Friendship[]  @relation("FriendshipRequester")
   receivedFriendRequests Friendship[]  @relation("FriendshipAddressee")
+  createdRooms           Room[]        @relation("RoomCreator")
+  addedParticipants      Participant[] @relation("ParticipantAdder")
 }
 
 model Friendship {
@@ -63,10 +65,17 @@ model Friendship {
 }
 
 model Room {
-  id        String   @id @default(uuid())
-  name      String?
-  isGroup   Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  name        String?
+  description String?
+  image       String?
+  isGroup     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Group creator/admin tracking
+  createdBy     String?
+  createdByUser User?   @relation("RoomCreator", fields: [createdBy], references: [id], onDelete: SetNull)
 
   messages     Message[]
   participants Participant[]
@@ -99,8 +108,13 @@ model Participant {
   roomId String
   room   Room   @relation(fields: [roomId], references: [id])
 
+  role       String   @default("member") // "admin" or "member"
   joinedAt   DateTime @default(now())
   lastReadAt DateTime @default(now()) // Track when the user last read the room
+
+  // Track who added this participant
+  addedBy     String?
+  addedByUser User?   @relation("ParticipantAdder", fields: [addedBy], references: [id], onDelete: SetNull)
 
   @@unique([userId, roomId])
 }

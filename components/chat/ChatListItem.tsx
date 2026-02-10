@@ -3,6 +3,7 @@
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Users, User } from "lucide-react"
+import { GroupContextMenu } from "@/components/chat/GroupContextMenu"
 
 interface ChatListItemProps {
     room: any
@@ -10,10 +11,24 @@ interface ChatListItemProps {
     onClick: () => void
     isOnline?: boolean
     unreadCount?: number
+    onShowInfo?: () => void
+    onAddParticipants?: () => void
+    onLeaveGroup?: () => void
+    onDeleteGroup?: () => void
 }
 
-export function ChatListItem({ room, selected, onClick, isOnline, unreadCount }: ChatListItemProps) {
-    return (
+export function ChatListItem({
+    room,
+    selected,
+    onClick,
+    isOnline,
+    unreadCount,
+    onShowInfo,
+    onAddParticipants,
+    onLeaveGroup,
+    onDeleteGroup
+}: ChatListItemProps) {
+    const chatItem = (
         <div
             onClick={onClick}
             className={cn(
@@ -75,4 +90,22 @@ export function ChatListItem({ room, selected, onClick, isOnline, unreadCount }:
             </div>
         </div>
     )
+
+    if (room.isGroup) {
+        return (
+            <GroupContextMenu
+                isGroup={room.isGroup}
+                isAdmin={room.currentUserRole === 'admin'}
+                isCreator={room.createdBy?.id === room.currentUserId}
+                onShowInfo={onShowInfo}
+                onAddParticipants={onAddParticipants}
+                onLeaveGroup={onLeaveGroup}
+                onDeleteGroup={onDeleteGroup}
+            >
+                {chatItem}
+            </GroupContextMenu>
+        )
+    }
+
+    return chatItem
 }
