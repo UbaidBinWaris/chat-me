@@ -31,7 +31,7 @@ app.prepare().then(async () => {
     const httpServer = createServer(server);
 
     const io = new Server(httpServer, {
-        // cors: { origin: "*" } 
+        cors: { origin: "*" }
     });
 
     global.io = io;

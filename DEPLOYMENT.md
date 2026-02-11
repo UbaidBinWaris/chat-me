@@ -125,6 +125,8 @@ cd /var/www/chat-app
 git pull
 npm install
 npx prisma migrate deploy
+npx prisma generate
 npm run build
 pm2 restart chat-app
 ```
+*Note: The `start` script now runs `npx tsx server.ts` to ensure the custom server and Socket.io are initialized correctly.*

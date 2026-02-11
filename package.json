@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx watch server.ts",
     "build": "next build",
-    "start": "next start",
+    "start": "npx tsx server.ts",
     "lint": "eslint"
   },
   "dependencies": {
