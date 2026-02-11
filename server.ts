@@ -65,9 +65,10 @@ app.prepare().then(async () => {
                 return next();
             }
 
-            return next(new Error("Unauthorized"));
+            console.log("Socket auth failed: No session data found");
+            return next(new Error("Unauthorized: No session"));
         } catch (err) {
-            console.error("Socket auth error:", err);
+            console.error("Socket auth error details:", err);
             return next(new Error("Authentication error"));
         }
     });

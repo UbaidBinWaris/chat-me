@@ -121,12 +121,12 @@ sudo ufw enable
 
 To update your deployment with new changes:
 ```bash
-cd /var/www/chat-app
+cd  ~/chat_app/chat-me
 git pull
 npm install
 npx prisma migrate deploy
 npx prisma generate
 npm run build
-pm2 restart chat-app
+pm2 restart chat-me
 ```
 *Note: The `start` script now runs `npx tsx server.ts` to ensure the custom server and Socket.io are initialized correctly.*
