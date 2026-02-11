@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Plus, LogOut, MessageCircle, UserPlus, Bell, MoreVertical, Settings, ChevronDown, ChevronRight } from "lucide-react"
 import { ChatListItem } from "@/components/chat/ChatListItem"
-import { UserListModal } from "@/components/chat/UserListModal"
+import { AddFriendModal } from "@/components/chat/AddFriendModal"
 import { NotificationCenter } from "@/components/chat/NotificationCenter"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
@@ -246,8 +246,8 @@ export function Sidebar({
                 </div>
             </div>
 
-            {/* User List Modal */}
-            <UserListModal
+            {/* Add Friend Modal */}
+            <AddFriendModal
                 isOpen={isUserListOpen}
                 onClose={() => setIsUserListOpen(false)}
                 onSelectUser={onStartDM}
